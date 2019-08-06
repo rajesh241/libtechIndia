@@ -1,0 +1,32 @@
+from django.contrib import admin
+
+# Register your models here.
+from .models import Location,Report,CrawlQueue
+
+
+class locationModelAdmin(admin.ModelAdmin):
+  list_display = ["name","stateShortCode","code","crawlIP","priority"]
+  list_filter = ["locationType"]
+  search_fields=["code"]
+  readonly_fields = ["parentLocation"]
+  class Meta:
+    model=Location
+
+class reportModelAdmin(admin.ModelAdmin):
+  list_display = ["id","location","reportType","finyear","updated"]
+  list_filter = ["reportType","finyear"]
+  search_fields=["location"]
+  readonly_fields = ["location"]
+  class Meta:
+    model=Report
+
+class crawlQueueModelAdmin(admin.ModelAdmin):
+  list_display = ["id","report","status","updated"]
+  list_filter = ["report__reportType","report__finyear"]
+  search_fields=["report__location__code","report__reportType"]
+  readonly_fields = ["report"]
+  class Meta:
+    model=CrawlQueue
+admin.site.register(CrawlQueue,crawlQueueModelAdmin)
+admin.site.register(Location,locationModelAdmin)
+admin.site.register(Report,reportModelAdmin)
