@@ -1,38 +1,44 @@
 from rest_framework import serializers
-from nrega.models import Location,Report,CrawlQueue
+from nrega.models import Location,Report,TaskQueue,Test,NREGANICError
 
+class TestSerializer(serializers.ModelSerializer):
+  class Meta:
+    model=Test
+    fields = '__all__'
+
+class NREGANICErrorSerializer(serializers.ModelSerializer):
+  class Meta:
+    model=NREGANICError
+    fields = '__all__'
 
 class LocationSerializer(serializers.ModelSerializer):
   class Meta:
     model=Location
-    fields=[
-      'id',
-      'name',
-      'slug',
-      'code',
-      'stateShortCode',
-      'crawlIP'
-      ]
+    fields = '__all__'
+  # fields=[
+  #   'id',
+  #   'name',
+  #   'slug',
+  #   'code',
+  #   'stateShortCode',
+  #   'crawlIP'
+  #   ]
 
 class ReportSerializer(serializers.ModelSerializer):
   class Meta:
     model=Report
-    fields=[
-      'id',
-      'location',
-      'reportType',
-      'finyear',
-      'reportURL',
+    fields = '__all__'
+   #fields=[
+   #  'id',
+   #  'location',
+   #  'reportType',
+   #  'finyear',
+   #  'reportURL',
 
-      ]
+   #  ]
 
-class CrawlQueueSerializer(serializers.ModelSerializer):
+class TaskQueueSerializer(serializers.ModelSerializer):
   class Meta:
-    model=CrawlQueue
-    fields=[
-      'id',
-      'report',
-      'status',
-
-      ]
+    model=TaskQueue
+    fields = '__all__'
 

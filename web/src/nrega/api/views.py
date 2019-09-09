@@ -7,13 +7,13 @@ from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
 from rest_framework import mixins,generics,permissions
 
-from nrega.models import Location,Report,CrawlQueue
+from nrega.models import Location,Report,TaskQueue,Test,NREGANICError
 from nrega.mixins import HttpResponseMixin
 from nrega.crawler.code.commons import getAvailableReports
 from accounts.api.permissions import IsOwnerOrReadOnly,IsAdminOwnerOrReadOnly
 from .mixins import CSRFExemptMixin
 from .utils import is_json
-from .serializers import LocationSerializer,ReportSerializer,CrawlQueueSerializer
+from .serializers import LocationSerializer,ReportSerializer,TaskQueueSerializer,TestSerializer,NREGANICErrorSerializer
 
 def getID(request):
   urlID=request.GET.get('id',None)
@@ -34,7 +34,7 @@ class LocationAPIView(HttpResponseMixin,
   inputID=None
   search_fields= ('name')
   ordering_fields=('name','id')
-  filter_fields=('name','code','locationType','parentLocation__code')
+  filter_fields=('name','code','locationType','parentLocation__code','stateCode','districtCode','blockCode')
   queryset=Location.objects.all()
   def get_object(self):
     inputID=self.inputID
@@ -85,10 +85,13 @@ class ReportOrCreateAPIView(HttpResponseMixin,
     ## Now since the location and Report has been validated lets check. 
     myReport=Report.objects.filter(finyear=finyear,reportType=reportType,location=l).first()
     if myReport is None:
-      message=f"The requested report is not avialable and the crawl has been initiatied. You can request for the same report after some time"
-      cq=CrawlQueue.objects.filter(reportType=reportType,finyear=finyear,locationCode=l.code,status='inQueue').first()
-      if cq is None:
-        cq=CrawlQueue.objects.create(reportType=reportType,finyear=finyear,locationCode=l.code)
+      if(request.user.is_anonymous):
+        message=f"The requested report is not avialable and the crawl cannot be initiated as system is unable to authenticate you. \n Kindly pass the authentication token in the headers of the request"
+      else: 
+        message=f"The requested report is not avialable and the crawl has been initiatied. You can request for the same report after some time"
+        cq=TaskQueue.objects.filter(reportType=reportType,finyear=finyear,locationCode=l.code,status='inQueue').first()
+        if cq is None:
+          cq=TaskQueue.objects.create(reportType=reportType,finyear=finyear,locationCode=l.code)
     else:
       message=f"Download : {myReport.reportURL}"
     return message
@@ -108,8 +111,73 @@ class ReportOrCreateAPIView(HttpResponseMixin,
   def post(self,request,*args,**kwargs):
     return self.create(request,*args,**kwargs)
 
-
 class ReportAPIView(HttpResponseMixin,
+                           mixins.CreateModelMixin,
+                           mixins.DestroyModelMixin,
+                           mixins.RetrieveModelMixin,
+                           mixins.UpdateModelMixin,
+                           generics.ListAPIView):
+  permission_classes=[permissions.IsAuthenticatedOrReadOnly]
+  serializer_class = ReportSerializer
+  passedID=None
+  inputID=None
+  search_fields= ('code')
+  ordering_fields=('code','id')
+  filter_fields=('reportType','location__stateCode','location__code','finyear','location__locationType')
+  queryset=Report.objects.all()
+  def get_object(self):
+    inputID=self.inputID
+    queryset=self.get_queryset()
+    obj=None
+    if inputID is not None:
+      obj=get_object_or_404(queryset,id=inputID)
+      self.check_object_permissions(self.request,obj)
+    return obj
+  def get(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is not None:
+      return self.retrieve(request,*args,**kwargs)
+    return super().get(request,*args,**kwargs)
+
+  def post(self,request,*args,**kwargs):
+    return self.create(request,*args,**kwargs)
+
+  def put(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.update(request,*args,**kwargs)
+
+  def patch(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    print(request.POST)
+    if self.inputID is None:
+      inputID=None
+      if is_json(request.body):
+        inputJsonData=json.loads(request.body)
+        reportType=inputJsonData.get("reportType",None)
+        finyear=inputJsonData.get("finyear","")
+        locationCode=inputJsonData.get("location__code",None)
+        objs=Report.objects.filter(reportType=reportType,finyear=finyear,location__code=locationCode)
+        if len(objs) == 1:
+          print("only one object found")
+          inputID=objs.first().id
+      if inputID is None:
+        data=json.dumps({"message":"Need to specify the ID for this method"})
+        return self.render_to_response(data,status="404")
+      self.inputID=inputID
+    return self.partial_update(request,*args,**kwargs)
+
+  def delete(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.destroy(request,*args,**kwargs)
+
+
+class ReportAPIView1(HttpResponseMixin,
                            mixins.RetrieveModelMixin,
                            mixins.CreateModelMixin,
                            generics.ListAPIView):
@@ -139,18 +207,20 @@ class ReportAPIView(HttpResponseMixin,
   def post(self,request,*args,**kwargs):
     return self.create(request,*args,**kwargs)
 
-class CrawlQueueAPIView(HttpResponseMixin,
+
+class TaskQueueAPIView1(HttpResponseMixin,
                            mixins.RetrieveModelMixin,
                            mixins.CreateModelMixin,
+                           mixins.UpdateModelMixin,
                            generics.ListAPIView):
-  permission_classes=[permissions.IsAuthenticatedOrReadOnly,IsAdminOwnerOrReadOnly]
-  serializer_class = CrawlQueueSerializer
+  permission_classes=[permissions.IsAuthenticatedOrReadOnly]
+  serializer_class = TaskQueueSerializer
   passedID=None
   inputID=None
   search_fields= ('report__location','report__reportType')
   ordering_fields=('updated','id')
   filter_fields=('report__reportType','report__location__code','report__finyear')
-  queryset=CrawlQueue.objects.all()
+  queryset=TaskQueue.objects.all()
   def get_object(self):
     inputID=self.inputID
     queryset=self.get_queryset()
@@ -166,6 +236,191 @@ class CrawlQueueAPIView(HttpResponseMixin,
     return super().get(request,*args,**kwargs)
   def post(self,request,*args,**kwargs):
     return self.create(request,*args,**kwargs)
+  def put(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.update(request,*args,**kwargs)
+
+class TaskQueueGetTask(HttpResponseMixin,
+                           mixins.RetrieveModelMixin,
+                           mixins.CreateModelMixin,
+                           generics.ListAPIView):
+  permission_classes=[permissions.IsAuthenticated]
+  serializer_class = TaskQueueSerializer
+  passedID=None
+  inputID=None
+  search_fields= ('report__location','report__reportType')
+  ordering_fields=('updated','id')
+  filter_fields=('report__reportType','report__location__code','report__finyear')
+  queryset=TaskQueue.objects.all()
+  def get_object(self):
+    obj=TaskQueue.objects.filter(status='inQueue').first()
+    obj=TaskQueue.objects.all().first()
+    if obj is not None:
+      obj.status='inProgress'
+      obj.save()
+    return obj
+  def get(self,request,*args,**kwargs):
+    return self.retrieve(request,*args,**kwargs)
+class TaskQueueAPIView(HttpResponseMixin,
+                           mixins.CreateModelMixin,
+                           mixins.DestroyModelMixin,
+                           mixins.RetrieveModelMixin,
+                           mixins.UpdateModelMixin,
+                           generics.ListAPIView):
+  permission_classes=[permissions.IsAuthenticatedOrReadOnly]
+  serializer_class = TaskQueueSerializer
+  passedID=None
+  inputID=None
+  search_fields= ('reportType','locationCode')
+  ordering_fields=('reportType','id')
+  filter_fields=('id','reportType','locationCode','finyear')
+  queryset=TaskQueue.objects.all()
+  def get_object(self):
+    inputID=self.inputID
+    queryset=self.get_queryset()
+    obj=None
+    if inputID is not None:
+      obj=get_object_or_404(queryset,id=inputID)
+      self.check_object_permissions(self.request,obj)
+    return obj
+  def get(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is not None:
+      return self.retrieve(request,*args,**kwargs)
+    return super().get(request,*args,**kwargs)
+
+  def post(self,request,*args,**kwargs):
+    return self.create(request,*args,**kwargs)
+
+  def put(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.update(request,*args,**kwargs)
+
+  def patch(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.partial_update(request,*args,**kwargs)
+
+  def delete(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.destroy(request,*args,**kwargs)
+
+class NREGANICErrorAPIView(HttpResponseMixin,
+                           mixins.CreateModelMixin,
+                           mixins.DestroyModelMixin,
+                           mixins.RetrieveModelMixin,
+                           mixins.UpdateModelMixin,
+                           generics.ListAPIView):
+  permission_classes=[permissions.IsAuthenticatedOrReadOnly]
+  serializer_class = NREGANICErrorSerializer
+  passedID=None
+  inputID=None
+  search_fields= ('errorType','code')
+  ordering_fields=('id')
+  filter_fields=('errorType','code')
+  queryset=Test.objects.all()
+  def get_object(self):
+    inputID=self.inputID
+    queryset=self.get_queryset()
+    obj=None
+    if inputID is not None:
+      obj=get_object_or_404(queryset,id=inputID)
+      self.check_object_permissions(self.request,obj)
+    return obj
+  def get(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is not None:
+      return self.retrieve(request,*args,**kwargs)
+    return super().get(request,*args,**kwargs)
+
+  def post(self,request,*args,**kwargs):
+    return self.create(request,*args,**kwargs)
+
+  def put(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.update(request,*args,**kwargs)
+
+  def patch(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.partial_update(request,*args,**kwargs)
+
+  def delete(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.destroy(request,*args,**kwargs)
+
+
+class TestAPIView(HttpResponseMixin,
+                           mixins.CreateModelMixin,
+                           mixins.DestroyModelMixin,
+                           mixins.RetrieveModelMixin,
+                           mixins.UpdateModelMixin,
+                           generics.ListAPIView):
+  permission_classes=[permissions.IsAuthenticatedOrReadOnly]
+  serializer_class = TestSerializer
+  passedID=None
+  inputID=None
+  search_fields= ('name')
+  ordering_fields=('name','id')
+  filter_fields=('id','name')
+  queryset=Test.objects.all()
+  def get_object(self):
+    inputID=self.inputID
+    queryset=self.get_queryset()
+    obj=None
+    if inputID is not None:
+      obj=get_object_or_404(queryset,id=inputID)
+      self.check_object_permissions(self.request,obj)
+    return obj
+  def get(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is not None:
+      return self.retrieve(request,*args,**kwargs)
+    return super().get(request,*args,**kwargs)
+
+  def post(self,request,*args,**kwargs):
+    return self.create(request,*args,**kwargs)
+
+  def put(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.update(request,*args,**kwargs)
+
+  def patch(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.partial_update(request,*args,**kwargs)
+
+  def delete(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.destroy(request,*args,**kwargs)
+
 
 '''
 class PanchayatCrawlInfoAPIView(HttpResponseMixin,
@@ -200,6 +455,13 @@ class PanchayatCrawlInfoAPIView(HttpResponseMixin,
     return self.create(request,*args,**kwargs)
 
   def put(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.update(request,*args,**kwargs)
+
+  def patch(self,request,*args,**kwargs):
     self.inputID=getID(request)
     if self.inputID is None:
       data=json.dumps({"message":"Need to specify the ID for this method"})

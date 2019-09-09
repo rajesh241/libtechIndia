@@ -5,7 +5,6 @@ fileDir = os.path.dirname(os.path.realpath(__file__))
 rootDir=fileDir+"/../../../"
 sys.path.insert(0, rootDir)
 from logging.handlers import RotatingFileHandler
-from nrega.models import Location
 from nrega.crawler.code.defines import reportTypeDict
 
 def loggerFetch(level=None,filename=None):

@@ -1,8 +1,12 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Location,Report,CrawlQueue
+from .models import Location,Report,TaskQueue,Test
 
+class testModelAdmin(admin.ModelAdmin):
+  list_display=["id","name","address","isAdult"]
+  class Meta:
+    model=Test
 
 class locationModelAdmin(admin.ModelAdmin):
   list_display = ["name","stateShortCode","code","crawlIP","priority"]
@@ -20,13 +24,14 @@ class reportModelAdmin(admin.ModelAdmin):
   class Meta:
     model=Report
 
-class crawlQueueModelAdmin(admin.ModelAdmin):
+class taskQueueModelAdmin(admin.ModelAdmin):
   list_display = ["id","report","status","updated"]
   list_filter = ["report__reportType","report__finyear"]
   search_fields=["report__location__code","report__reportType"]
   readonly_fields = ["report"]
   class Meta:
-    model=CrawlQueue
-admin.site.register(CrawlQueue,crawlQueueModelAdmin)
+    model=TaskQueue
+admin.site.register(TaskQueue,taskQueueModelAdmin)
 admin.site.register(Location,locationModelAdmin)
 admin.site.register(Report,reportModelAdmin)
+admin.site.register(Test,testModelAdmin)

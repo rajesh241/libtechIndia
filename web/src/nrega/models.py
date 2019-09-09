@@ -3,7 +3,7 @@ from django.utils.text import slugify
 from django.db.models.signals import pre_save,post_save
 
 # Create your models here.
-
+ 
 class Location(models.Model):
   name=models.CharField(max_length=256)
   nicURL=models.URLField(max_length=2048,blank=True,null=True)
@@ -37,8 +37,9 @@ class Report(models.Model):
   location=models.ForeignKey('Location',on_delete=models.CASCADE)
   reportType=models.CharField(max_length=256)
   reportURL=models.URLField(max_length=2048,blank=True,null=True)
+  excelURL=models.URLField(max_length=2048,blank=True,null=True)
   code=models.CharField(max_length=256,db_index=True,blank=True,null=True)
-  finyear=models.CharField(max_length=2,blank=True,null=True)
+  finyear=models.CharField(max_length=2,blank=True)
   created=models.DateTimeField(auto_now_add=True)
   updated=models.DateTimeField(auto_now=True)
   class Meta:
@@ -47,19 +48,42 @@ class Report(models.Model):
   def __str__(self):
     return self.location.code+"_"+self.location.name+"-"+self.reportType
 
-class CrawlQueue(models.Model):
+class TaskQueue(models.Model):
   report=models.ForeignKey('Report',on_delete=models.CASCADE,null=True,blank=True)
   reportType=models.CharField(max_length=256)
   locationCode=models.CharField(max_length=20)
   finyear=models.CharField(max_length=2,null=True)
   status=models.CharField(max_length=256,default='inQueue')
+  isError=models.BooleanField(default=False)
+  isDone=models.BooleanField(default=False)
+  response=models.CharField(max_length=256,null=True,blank=True)
   created=models.DateTimeField(auto_now_add=True)
   updated=models.DateTimeField(auto_now=True)
   class Meta:
-    db_table = 'crawlQueue'
+    db_table = 'taskQueue'
   def __str__(self):
     return self.locationCode+"_"+self.reportType
 
+class Test(models.Model):
+  name=models.CharField(max_length=256)
+  address=models.CharField(max_length=256)
+  isAdult=models.BooleanField(default=False)
+  class Meta:
+    db_table = 'test'
+  def __str__(self):
+    return self.name
+
+class NREGANICError(models.Model):
+  errorType=models.CharField(max_length=256)
+  code=models.CharField(max_length=256)
+  remarks=models.TextField(blank=True,null=True)
+  created=models.DateTimeField(auto_now_add=True)
+  updated=models.DateTimeField(auto_now=True)
+  class Meta:
+    db_table = 'nregaNICError'
+  def __str__(self):
+    return self.errorType
+ 
 def createslug(instance):
   try:
     myslug=slugify(instance.name)[:50]

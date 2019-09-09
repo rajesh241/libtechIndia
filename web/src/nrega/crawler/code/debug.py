@@ -9,6 +9,7 @@ fileDir = os.path.dirname(os.path.realpath(__file__))
 rootDir=fileDir+"/../../../"
 sys.path.insert(0, rootDir)
 from config.defines import djangoSettings
+print(djangoSettings)
 from commons import loggerFetch
 import django
 from django.core.wsgi import get_wsgi_application
@@ -43,7 +44,7 @@ def main():
     reportType=args['testInput1']
     code=args['testInput2']
     l=Location.objects.filter(code=code).first()
-    myReport=Report.objects.create(reportType=reportType,location=l,finyear='18')
+    myReport=Report.objects.create(reportType=reportType,location=l,finyear="")
   logger.info("...END PROCESSING") 
   exit(0)
 
