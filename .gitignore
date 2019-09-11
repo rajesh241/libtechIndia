@@ -105,3 +105,4 @@ venv.bak/
 
 #
 /web/src/config/defines.py
+/web/src/config/my.cnf
