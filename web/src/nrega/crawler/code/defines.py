@@ -1,6 +1,6 @@
 reportTypeDict={
-      'NICPanchayat' : ["nicStat","jobcardRegister"],
-      'NICBlock'     : ["nicStat","muster"],
+      'NICPanchayat' : ["nicGlanceStats","jobcardRegister"],
+      'NICBlock'     : ["nicGlanceStats","muster"],
       'NICDistrict'  : [],
       'NICState'     : ['nicStat'],
       'APPanchayat'  : ['jobcardRegister'],

@@ -1,4 +1,5 @@
 import json
+import datetime
 from django.views.generic import View
 from django.http import HttpResponse,JsonResponse
 from django.shortcuts import get_object_or_404
@@ -6,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
 from rest_framework import mixins,generics,permissions
-
+from django.db.models import Q
 from nrega.models import Location,Report,TaskQueue,Test,NREGANICError
 from nrega.mixins import HttpResponseMixin
 from nrega.crawler.code.commons import getAvailableReports
@@ -14,6 +15,20 @@ from accounts.api.permissions import IsOwnerOrReadOnly,IsAdminOwnerOrReadOnly
 from .mixins import CSRFExemptMixin
 from .utils import is_json
 from .serializers import LocationSerializer,ReportSerializer,TaskQueueSerializer,TestSerializer,NREGANICErrorSerializer
+
+def getCurrentFinYear():
+  now = datetime.datetime.now()
+  month=now.month
+  if now.month > 3:
+    year=now.year+1
+  else:
+    year=now.year
+  return year% 100
+
+def getDefaultStartFinYear():
+  endFinYear=getCurrentFinYear()
+  startFinYear = str ( int(endFinYear) -1 )
+  return startFinYear
 
 def getID(request):
   urlID=request.GET.get('id',None)
@@ -50,6 +65,11 @@ class LocationAPIView(HttpResponseMixin,
       return self.retrieve(request,*args,**kwargs)
     return super().get(request,*args,**kwargs)
 
+def get_serialized(queryset):
+#    queryset = Report.objects.filter(id__lte=100)
+    serializer = ReportSerializer(queryset, many=True)
+    data = serializer.data
+    return data
 class ReportOrCreateAPIView(HttpResponseMixin,
                            mixins.RetrieveModelMixin,
                            mixins.CreateModelMixin,
@@ -64,44 +84,59 @@ class ReportOrCreateAPIView(HttpResponseMixin,
   queryset=Report.objects.all()
   def validate_queryParams(self,request):
     message=""
+    data=None
     query_params=request.query_params
     print("I am in validate Query Parameters")
     print(query_params)
     locationCode=query_params.get("location__code",None)
     reportType=query_params.get("reportType",None)
-    finyear=query_params.get("finyear",None)
+    startFinYear=query_params.get("startFinYear",None)
+    endFinYear=query_params.get("startFinYear",None)
     if locationCode is None:
       message="Location not specified hence no report has been requested"
-      return message
+      return message,data
     l=Location.objects.filter(code=locationCode).first()
     if l is None:
        message=f"Could not find any location with {locationCode}. Please use valid locationCode"
-       return message
+       return message,data
     availableReports=getAvailableReports(l)
     print(availableReports)
     if reportType not in availableReports:
        message=f"{reportType} does not match any standard report. Kindly use one of the following reporttypes {availableReports}"
-       return message
+       return message,data
     ## Now since the location and Report has been validated lets check. 
-    myReport=Report.objects.filter(finyear=finyear,reportType=reportType,location=l).first()
-    if myReport is None:
-      if(request.user.is_anonymous):
-        message=f"The requested report is not avialable and the crawl cannot be initiated as system is unable to authenticate you. \n Kindly pass the authentication token in the headers of the request"
-      else: 
-        message=f"The requested report is not avialable and the crawl has been initiatied. You can request for the same report after some time"
-        cq=TaskQueue.objects.filter(reportType=reportType,finyear=finyear,locationCode=l.code,status='inQueue').first()
-        if cq is None:
-          cq=TaskQueue.objects.create(reportType=reportType,finyear=finyear,locationCode=l.code)
-    else:
-      message=f"Download : {myReport.reportURL}"
-    return message
+    if(request.user.is_anonymous):
+      message=f"The requested report is not avialable and the crawl cannot be initiated as system is unable to authenticate you. \n Kindly pass the authentication token in the headers of the request"
+      return message,data
+
+    cq=TaskQueue.objects.filter(reportType=reportType,startFinYear=startFinYear,endFinYear=endFinYear,locationCode=l.code,status='inQueue').first()
+    if cq is None:
+      cq=TaskQueue.objects.create(reportType=reportType,locationCode=l.code,startFinYear=startFinYear,endFinYear=endFinYear)
+    message=f"The crawl has been initiatiated with Task ID {cq.id}"
+#   myReport=None 
+#   if myReport is None:
+#     else: 
+#       message=f"The requested report is not avialable and the crawl has been initiatied. You can request for the same report after some time"
+#   else:
+#     message=f"Download : {myReport.reportURL}"
+#   print("I am here once again")
+    if startFinYear is None:
+      startFinYear=getDefaultStartFinYear()
+    if endFinYear is None:
+      endFinYear=getCurrentFinYear()
+    queryset=Report.objects.filter(reportType=reportType,location=l).filter(  Q(Q (finyear__gte=startFinYear) & Q (finyear__lte=endFinYear)) | Q(finyear = ''))
+    data=get_serialized(queryset)
+    return message,data
 
   def get(self,request,*args,**kwargs):
     queryset=self.filter_queryset(self.queryset)
     print(queryset)
-    if len(queryset) == 0:
-      message=self.validate_queryParams(request)
-      data={'message':message}
+    if len(queryset) >= 0:
+      message,data1=self.validate_queryParams(request)
+      if data1 is None:
+        data={"message":message}
+      else:
+        data={"message":message,"data":data1}
       return JsonResponse(data)
     else:
       self.inputID=getID(request)
@@ -275,8 +310,8 @@ class TaskQueueAPIView(HttpResponseMixin,
   passedID=None
   inputID=None
   search_fields= ('reportType','locationCode')
-  ordering_fields=('reportType','id')
-  filter_fields=('id','reportType','locationCode','finyear')
+  ordering_fields=('reportType','id','updated','priority')
+  filter_fields=('id','reportType','locationCode','finyear','status','isDone')
   queryset=TaskQueue.objects.all()
   def get_object(self):
     inputID=self.inputID

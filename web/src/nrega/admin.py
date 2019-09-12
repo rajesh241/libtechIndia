@@ -25,8 +25,8 @@ class reportModelAdmin(admin.ModelAdmin):
     model=Report
 
 class taskQueueModelAdmin(admin.ModelAdmin):
-  list_display = ["id","report","status","updated"]
-  list_filter = ["report__reportType","report__finyear"]
+  list_display = ["id","reportType","priority","status","updated","isDone"]
+  list_filter = ["reportType","status"]
   search_fields=["report__location__code","report__reportType"]
   readonly_fields = ["report"]
   class Meta:
