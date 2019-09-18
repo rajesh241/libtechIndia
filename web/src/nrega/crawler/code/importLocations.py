@@ -29,6 +29,7 @@ def argsFetch():
   parser = argparse.ArgumentParser(description='These scripts will initialize the Database for the district and populate relevant details')
   parser.add_argument('-l', '--log-level', help='Log level defining verbosity', required=False)
   parser.add_argument('-i', '--import', help='import Json Data', required=False,action='store_const', const=1)
+  parser.add_argument('-e', '--export', help='import Json Data', required=False,action='store_const', const=1)
   parser.add_argument('-t', '--test', help='Test Loop', required=False,action='store_const', const=1)
   parser.add_argument('-c', '--crawl', help='crawl Locations ', required=False,action='store_const', const=1)
   parser.add_argument('-lt', '--locationType', help='Location Type to be crawled can take values of state,district,block,panchayat', required=False)
@@ -84,7 +85,10 @@ def main():
       totalBlocks=len(Location.objects.filter(locationType='block',stateCode=eachState.code))
       totalPanchayats=len(Location.objects.filter(locationType='panchayat',stateCode=eachState.code))
       logger.info(f"{eachState.code}-{eachState.name}:{totalDistricts}-{totalBlocks}-{totalPanchayats}")
-
+  if args['export']:
+    logger.info("Exporting Locations")
+    df = pd.DataFrame(list(Location.objects.all().values("name","locationType","stateCode","districtCode","blockCode","panchayatCode","stateName","districtName","blockName","panchayatName")))
+    df.to_csv("/tmp/locations.csv")
   if args['crawl']:
     logger.info("Crawling Locations")
     locationType=args['locationType']
