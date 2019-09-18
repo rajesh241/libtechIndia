@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Location,Report,TaskQueue,Test
+from .models import Location,Report,TaskQueue,Test,LibtechDataStatus
 
 class testModelAdmin(admin.ModelAdmin):
   list_display=["id","name","address","isAdult"]
@@ -24,6 +24,14 @@ class reportModelAdmin(admin.ModelAdmin):
   class Meta:
     model=Report
 
+class libtechDataStatusModelAdmin(admin.ModelAdmin):
+  list_display = ["id","__str__","finyear","accuracy","updated"]
+  list_filter = ["finyear"]
+  search_fields=["ocation__code","location__name"]
+  readonly_fields = ["location"]
+  class Meta:
+    model=LibtechDataStatus
+
 class taskQueueModelAdmin(admin.ModelAdmin):
   list_display = ["id","reportType","priority","status","updated","isDone"]
   list_filter = ["reportType","status"]
@@ -31,7 +39,9 @@ class taskQueueModelAdmin(admin.ModelAdmin):
   readonly_fields = ["report"]
   class Meta:
     model=TaskQueue
+
 admin.site.register(TaskQueue,taskQueueModelAdmin)
 admin.site.register(Location,locationModelAdmin)
 admin.site.register(Report,reportModelAdmin)
+admin.site.register(LibtechDataStatus,libtechDataStatusModelAdmin)
 admin.site.register(Test,testModelAdmin)

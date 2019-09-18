@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from nrega.models import Location,Report,TaskQueue,Test,NREGANICError
+from nrega.models import Location,Report,TaskQueue,Test,NREGANICError,LibtechDataStatus
 
 class TestSerializer(serializers.ModelSerializer):
   class Meta:
@@ -9,6 +9,11 @@ class TestSerializer(serializers.ModelSerializer):
 class NREGANICErrorSerializer(serializers.ModelSerializer):
   class Meta:
     model=NREGANICError
+    fields = '__all__'
+
+class LibtechDataStatusSerializer(serializers.ModelSerializer):
+  class Meta:
+    model=LibtechDataStatus
     fields = '__all__'
 
 class LocationSerializer(serializers.ModelSerializer):

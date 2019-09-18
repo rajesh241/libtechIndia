@@ -41,6 +41,11 @@ def main():
   logger = loggerFetch(args.get('log_level'))
   if args['test']:
     logger.info("executing test loop")
+    objs=Location.objects.all().order_by("-id")
+    for obj in objs:
+      logger.info(obj.id)
+      obj.save()
+    exit(0)
     reportType=args['testInput1']
     code=args['testInput2']
     l=Location.objects.filter(code=code).first()

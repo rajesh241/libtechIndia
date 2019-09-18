@@ -1,9 +1,9 @@
 from django.db import models
-from django.utils.text import slugify
+#from django.utils.text import slugify
 from django.db.models.signals import pre_save,post_save
-
+from slugify import slugify
 # Create your models here.
- 
+
 class Location(models.Model):
   name=models.CharField(max_length=256)
   nicURL=models.URLField(max_length=2048,blank=True,null=True)
@@ -32,6 +32,19 @@ class Location(models.Model):
     db_table = 'location'
   def __str__(self):
     return self.code
+
+class LibtechDataStatus(models.Model):
+  location=models.ForeignKey('Location',on_delete=models.CASCADE)
+  dataType=models.CharField(max_length=256,blank=True,null=True,default='nrega')
+  finyear=models.CharField(max_length=2,blank=True,null=True)
+  accuracy=models.PositiveSmallIntegerField(default=0)
+  created=models.DateTimeField(auto_now_add=True)
+  updated=models.DateTimeField(auto_now=True)
+  class Meta:
+    unique_together = ('location','dataType','finyear')  
+    db_table = 'libtechDataStatus'
+  def __str__(self):
+    return self.location.code+"_"+self.location.name
 
 class Report(models.Model):
   location=models.ForeignKey('Location',on_delete=models.CASCADE)

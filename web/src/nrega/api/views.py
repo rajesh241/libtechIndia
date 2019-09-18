@@ -8,13 +8,13 @@ from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
 from rest_framework import mixins,generics,permissions
 from django.db.models import Q
-from nrega.models import Location,Report,TaskQueue,Test,NREGANICError
+from nrega.models import Location,Report,TaskQueue,Test,NREGANICError,LibtechDataStatus
 from nrega.mixins import HttpResponseMixin
 from nrega.crawler.code.commons import getAvailableReports
 from accounts.api.permissions import IsOwnerOrReadOnly,IsAdminOwnerOrReadOnly
 from .mixins import CSRFExemptMixin
 from .utils import is_json
-from .serializers import LocationSerializer,ReportSerializer,TaskQueueSerializer,TestSerializer,NREGANICErrorSerializer
+from .serializers import LocationSerializer,ReportSerializer,TaskQueueSerializer,TestSerializer,NREGANICErrorSerializer,LibtechDataStatusSerializer
 
 def getCurrentFinYear():
   now = datetime.datetime.now()
@@ -86,8 +86,6 @@ class ReportOrCreateAPIView(HttpResponseMixin,
     message=""
     data=None
     query_params=request.query_params
-    print("I am in validate Query Parameters")
-    print(query_params)
     locationCode=query_params.get("location__code",None)
     reportType=query_params.get("reportType",None)
     startFinYear=query_params.get("startFinYear",None)
@@ -100,7 +98,6 @@ class ReportOrCreateAPIView(HttpResponseMixin,
        message=f"Could not find any location with {locationCode}. Please use valid locationCode"
        return message,data
     availableReports=getAvailableReports(l)
-    print(availableReports)
     if reportType not in availableReports:
        message=f"{reportType} does not match any standard report. Kindly use one of the following reporttypes {availableReports}"
        return message,data
@@ -145,6 +142,73 @@ class ReportOrCreateAPIView(HttpResponseMixin,
       return super().get(request,*args,**kwargs)
   def post(self,request,*args,**kwargs):
     return self.create(request,*args,**kwargs)
+
+class LibtechDataStatusAPIView(HttpResponseMixin,
+                           mixins.CreateModelMixin,
+                           mixins.DestroyModelMixin,
+                           mixins.RetrieveModelMixin,
+                           mixins.UpdateModelMixin,
+                           generics.ListAPIView):
+  permission_classes=[permissions.IsAuthenticatedOrReadOnly]
+  serializer_class = LibtechDataStatusSerializer
+  passedID=None
+  inputID=None
+  search_fields= ('location__code','finyear')
+  ordering_fields=('location__code','id')
+  filter_fields=('location__stateCode','location__code','finyear','location__locationType')
+  queryset=LibtechDataStatus.objects.all()
+  def get_object(self):
+    inputID=self.inputID
+    queryset=self.get_queryset()
+    obj=None
+    if inputID is not None:
+      obj=get_object_or_404(queryset,id=inputID)
+      self.check_object_permissions(self.request,obj)
+    return obj
+  def get(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is not None:
+      return self.retrieve(request,*args,**kwargs)
+    return super().get(request,*args,**kwargs)
+
+  def post(self,request,*args,**kwargs):
+    return self.create(request,*args,**kwargs)
+
+  def put(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.update(request,*args,**kwargs)
+
+  def patch(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    print(request.POST)
+    if self.inputID is None:
+      inputID=None
+      if is_json(request.body):
+        inputJsonData=json.loads(request.body)
+        reportType=inputJsonData.get("reportType",None)
+        finyear=inputJsonData.get("finyear","")
+        locationCode=inputJsonData.get("location__code",None)
+        objs=Report.objects.filter(reportType=reportType,finyear=finyear,location__code=locationCode)
+        if len(objs) == 1:
+          print("only one object found")
+          inputID=objs.first().id
+      if inputID is None:
+        data=json.dumps({"message":"Need to specify the ID for this method"})
+        return self.render_to_response(data,status="404")
+      self.inputID=inputID
+    return self.partial_update(request,*args,**kwargs)
+
+  def delete(self,request,*args,**kwargs):
+    self.inputID=getID(request)
+    if self.inputID is None:
+      data=json.dumps({"message":"Need to specify the ID for this method"})
+      return self.render_to_response(data,status="404")
+    return self.destroy(request,*args,**kwargs)
+
+
 
 class ReportAPIView(HttpResponseMixin,
                            mixins.CreateModelMixin,
