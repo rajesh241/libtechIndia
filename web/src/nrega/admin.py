@@ -1,4 +1,5 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
 
 # Register your models here.
 from .models import Location,Report,TaskQueue,Test,LibtechDataStatus
@@ -8,7 +9,7 @@ class testModelAdmin(admin.ModelAdmin):
   class Meta:
     model=Test
 
-class locationModelAdmin(admin.ModelAdmin):
+class locationModelAdmin(ImportExportModelAdmin):
   list_display = ["name","stateShortCode","code","crawlIP","priority"]
   list_filter = ["locationType"]
   search_fields=["code"]

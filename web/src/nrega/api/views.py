@@ -89,7 +89,7 @@ class ReportOrCreateAPIView(HttpResponseMixin,
     locationCode=query_params.get("location__code",None)
     reportType=query_params.get("reportType",None)
     startFinYear=query_params.get("startFinYear",None)
-    endFinYear=query_params.get("startFinYear",None)
+    endFinYear=query_params.get("endFinYear",None)
     if locationCode is None:
       message="Location not specified hence no report has been requested"
       return message,data
