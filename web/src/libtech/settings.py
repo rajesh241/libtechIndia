@@ -168,3 +168,5 @@ AWS_HEADERS = {
 
 
 from restconf.main import *
+IMPORT_EXPORT_USE_TRANSACTIONS = True
+
