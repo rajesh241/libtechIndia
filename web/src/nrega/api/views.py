@@ -89,6 +89,7 @@ class ReportOrCreateAPIView(HttpResponseMixin,
     locationCode=query_params.get("location__code",None)
     reportType=query_params.get("reportType",None)
     startFinYear=query_params.get("startFinYear",None)
+    priority=query_params.get("priority",100)
     endFinYear=query_params.get("endFinYear",None)
     if locationCode is None:
       message="Location not specified hence no report has been requested"
@@ -109,6 +110,8 @@ class ReportOrCreateAPIView(HttpResponseMixin,
     cq=TaskQueue.objects.filter(reportType=reportType,startFinYear=startFinYear,endFinYear=endFinYear,locationCode=l.code,status='inQueue').first()
     if cq is None:
       cq=TaskQueue.objects.create(reportType=reportType,locationCode=l.code,startFinYear=startFinYear,endFinYear=endFinYear)
+    cq.priority=priority
+    cq.save()
     message=f"The crawl has been initiatiated with Task ID {cq.id}"
 #   myReport=None 
 #   if myReport is None:
