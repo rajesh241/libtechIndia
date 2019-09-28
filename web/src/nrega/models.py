@@ -74,6 +74,9 @@ class TaskQueue(models.Model):
   isError=models.BooleanField(default=False)
   isDone=models.BooleanField(default=False)
   response=models.CharField(max_length=256,null=True,blank=True)
+  startTime=models.DateTimeField(null=True,blank=True)
+  endTime=models.DateTimeField(null=True,blank=True)
+  duration=models.IntegerField(null=True,blank=True)
   created=models.DateTimeField(auto_now_add=True)
   updated=models.DateTimeField(auto_now=True)
   class Meta:
