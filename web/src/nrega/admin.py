@@ -34,7 +34,7 @@ class libtechDataStatusModelAdmin(admin.ModelAdmin):
     model=LibtechDataStatus
 
 class taskQueueModelAdmin(admin.ModelAdmin):
-  list_display = ["id","locationCode","reportType","priority","status","updated","duration","isDone"]
+  list_display = ["id","locationCode","reportType","priority","status","updated","duration","processName"]
   list_filter = ["reportType","status"]
   search_fields=["report__location__code","report__reportType"]
   readonly_fields = ["report"]

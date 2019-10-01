@@ -19,7 +19,7 @@ from django.db.models import F,Q,Sum,Count
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", djangoSettings)
 django.setup()
 
-from nrega.models import Location,Report
+from nrega.models import Location,Report,TaskQueue
 
 def argsFetch():
   '''
@@ -40,6 +40,11 @@ def main():
   args = argsFetch()
   logger = loggerFetch(args.get('log_level'))
   if args['test']:
+    objs=TaskQueue.objects.filter(status="inProgress")
+    for obj in objs:
+      obj.status="inQueue"
+      obj.save()
+    exit(0)
     logger.info("executing test loop")
     objs=Location.objects.all().order_by("-id")
     for obj in objs:

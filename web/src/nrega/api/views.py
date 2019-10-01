@@ -49,7 +49,7 @@ class LocationAPIView(HttpResponseMixin,
   inputID=None
   search_fields= ('name')
   ordering_fields=('name','id')
-  filter_fields=('name','code','locationType','parentLocation__code','stateCode','districtCode','blockCode')
+  filter_fields=('name','code','scheme','locationType','parentLocation__code','stateCode','districtCode','blockCode')
   queryset=Location.objects.all()
   def get_object(self):
     inputID=self.inputID
@@ -89,12 +89,15 @@ class ReportOrCreateAPIView(HttpResponseMixin,
     locationCode=query_params.get("location__code",None)
     reportType=query_params.get("reportType",None)
     startFinYear=query_params.get("startFinYear",None)
+    scheme=query_params.get("scheme",None)
     priority=query_params.get("priority",100)
     endFinYear=query_params.get("endFinYear",None)
+    if scheme is None:
+      scheme='nrega'
     if locationCode is None:
       message="Location not specified hence no report has been requested"
       return message,data
-    l=Location.objects.filter(code=locationCode).first()
+    l=Location.objects.filter(code=locationCode,scheme=scheme).first()
     if l is None:
        message=f"Could not find any location with {locationCode}. Please use valid locationCode"
        return message,data
@@ -107,9 +110,9 @@ class ReportOrCreateAPIView(HttpResponseMixin,
       message=f"The requested report is not avialable and the crawl cannot be initiated as system is unable to authenticate you. \n Kindly pass the authentication token in the headers of the request"
       return message,data
 
-    cq=TaskQueue.objects.filter(reportType=reportType,startFinYear=startFinYear,endFinYear=endFinYear,locationCode=l.code,status='inQueue').first()
+    cq=TaskQueue.objects.filter(reportType=reportType,startFinYear=startFinYear,endFinYear=endFinYear,scheme=scheme,locationCode=l.code,status='inQueue').first()
     if cq is None:
-      cq=TaskQueue.objects.create(reportType=reportType,locationCode=l.code,startFinYear=startFinYear,endFinYear=endFinYear)
+      cq=TaskQueue.objects.create(reportType=reportType,locationCode=l.code,startFinYear=startFinYear,scheme=scheme,endFinYear=endFinYear)
     cq.priority=priority
     cq.save()
     message=f"The crawl has been initiatiated with Task ID {cq.id}"
