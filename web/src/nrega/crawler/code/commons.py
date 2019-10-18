@@ -50,5 +50,6 @@ def getAvailableReports(lobj):
   else:
     prefix=lobj.stateShortCode
   key=prefix+locationType
-  availableReports=reportTypeDict[key]
+  emptyArray=[]
+  availableReports=reportTypeDict.get(key,emptyArray)
   return availableReports

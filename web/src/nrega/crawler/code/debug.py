@@ -40,9 +40,18 @@ def main():
   args = argsFetch()
   logger = loggerFetch(args.get('log_level'))
   if args['test']:
-    objs=TaskQueue.objects.filter(status="inProgress")
+    ltArray=[1]
+    objs=Location.objects.filter(libtechTag__in=ltArray)
+    s=''
+    for obj in objs:
+      logger.info(obj.code)
+      s+=f"'{obj.code}',"
+    logger.info(s)
+    exit(0)
+    objs=TaskQueue.objects.filter(status="inQueue")
     for obj in objs:
       obj.status="inQueue"
+      obj.priority=100
       obj.save()
     exit(0)
     logger.info("executing test loop")

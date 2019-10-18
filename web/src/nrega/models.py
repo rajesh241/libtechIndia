@@ -4,8 +4,17 @@ from django.db.models.signals import pre_save,post_save
 from slugify import slugify
 # Create your models here.
 
+class LibtechTag(models.Model):
+  name=models.CharField(max_length=256)
+  slug=models.SlugField(blank=True) 
+  class Meta:
+    db_table = 'libtechtag'
+  def __str__(self):
+    return self.name
+
 class Location(models.Model):
   name=models.CharField(max_length=256)
+  libtechTag=models.ManyToManyField(LibtechTag)
   nicURL=models.URLField(max_length=2048,blank=True,null=True)
   displayName=models.CharField(max_length=2048)
   locationType=models.CharField(max_length=64)
@@ -126,4 +135,12 @@ def location_post_save_receiver(sender,instance,*args,**kwargs):
   if instance.slug != myslug:
     instance.slug = myslug
     instance.save()
+
+def libtechTag_post_save_receiver(sender,instance,*args,**kwargs):
+  myslug=slugify(instance.name)[:50]
+  if instance.slug != myslug:
+    instance.slug = myslug
+    instance.save()
+
 post_save.connect(location_post_save_receiver,sender=Location)
+post_save.connect(libtechTag_post_save_receiver,sender=LibtechTag)

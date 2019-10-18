@@ -2,12 +2,17 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 
 # Register your models here.
-from .models import Location,Report,TaskQueue,Test,LibtechDataStatus
+from .models import Location,Report,TaskQueue,Test,LibtechDataStatus,LibtechTag
 
 class testModelAdmin(admin.ModelAdmin):
   list_display=["id","name","address","isAdult"]
   class Meta:
     model=Test
+
+class libtechTagModelAdmin(admin.ModelAdmin):
+  list_display=["id","name","slug"]
+  class Meta:
+    model=LibtechTag
 
 class locationModelAdmin(ImportExportModelAdmin):
   list_display = ["name","stateShortCode","code","crawlIP","priority"]
@@ -46,3 +51,4 @@ admin.site.register(Location,locationModelAdmin)
 admin.site.register(Report,reportModelAdmin)
 admin.site.register(LibtechDataStatus,libtechDataStatusModelAdmin)
 admin.site.register(Test,testModelAdmin)
+admin.site.register(LibtechTag,libtechTagModelAdmin)
