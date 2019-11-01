@@ -3,6 +3,7 @@ from import_export.admin import ImportExportModelAdmin
 
 # Register your models here.
 from .models import Location,Report,TaskQueue,Test,LibtechDataStatus,LibtechTag
+from .actions import download_reports_zip
 
 class testModelAdmin(admin.ModelAdmin):
   list_display=["id","name","address","isAdult"]
@@ -23,6 +24,7 @@ class locationModelAdmin(ImportExportModelAdmin):
     model=Location
 
 class reportModelAdmin(admin.ModelAdmin):
+  actions = [download_reports_zip]
   list_display = ["id","location","reportType","finyear","updated"]
   list_filter = ["reportType","finyear"]
   search_fields=["location__code","location__name"]
