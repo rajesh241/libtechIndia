@@ -16,8 +16,8 @@ class libtechTagModelAdmin(admin.ModelAdmin):
 
 class locationModelAdmin(ImportExportModelAdmin):
   list_display = ["name","stateShortCode","code","crawlIP","priority"]
-  list_filter = ["locationType"]
-  search_fields=["code"]
+  list_filter = ["locationType","scheme"]
+  search_fields=["code","name"]
   readonly_fields = ["parentLocation"]
   class Meta:
     model=Location
@@ -25,7 +25,7 @@ class locationModelAdmin(ImportExportModelAdmin):
 class reportModelAdmin(admin.ModelAdmin):
   list_display = ["id","location","reportType","finyear","updated"]
   list_filter = ["reportType","finyear"]
-  search_fields=["location"]
+  search_fields=["location__code","location__name"]
   readonly_fields = ["location"]
   class Meta:
     model=Report
