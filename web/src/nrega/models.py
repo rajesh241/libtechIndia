@@ -62,7 +62,7 @@ class Report(models.Model):
   reportURL=models.URLField(max_length=2048,blank=True,null=True)
   excelURL=models.URLField(max_length=2048,blank=True,null=True)
   code=models.CharField(max_length=256,db_index=True,blank=True,null=True)
-  finyear=models.CharField(max_length=2,blank=True)
+  finyear=models.CharField(max_length=2,blank=True,null=True,default='NA')
   created=models.DateTimeField(auto_now_add=True)
   updated=models.DateTimeField(auto_now=True)
   class Meta:

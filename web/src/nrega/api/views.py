@@ -1,6 +1,8 @@
 import json
 import datetime
 from django.views.generic import View
+from django_filters import rest_framework as filters
+
 from django.http import HttpResponse,JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
@@ -215,7 +217,21 @@ class LibtechDataStatusAPIView(HttpResponseMixin,
     return self.destroy(request,*args,**kwargs)
 
 
+class ReportFilter(filters.FilterSet):
+ #   min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
+ #   max_price = filters.NumberFilter(field_name="price", lookup_expr='lte')
 
+    class Meta:
+        model = Report
+        fields=['reportType','location__stateCode','location__code','finyear','location__locationType','location__stateCode']
+    @property
+    def qs(self):
+        parent_qs = super(ReportFilter, self).qs
+        return parent_qs
+       #if 'finyear' in self.request.query_params:
+       #    return parent_qs
+       #else:
+       #    return parent_qs.filter(finyear='NA')
 class ReportAPIView(HttpResponseMixin,
                            mixins.CreateModelMixin,
                            mixins.DestroyModelMixin,
@@ -228,7 +244,9 @@ class ReportAPIView(HttpResponseMixin,
   inputID=None
   search_fields= ('code')
   ordering_fields=('code','id')
-  filter_fields=('reportType','location__stateCode','location__code','finyear','location__locationType','location__stateCode')
+  filterset_class = ReportFilter
+
+  filter_fields=('reportType','location__stateCode','location__code','finyear','location__locationType','location__parentLocation__code')
   queryset=Report.objects.all()
   def get_object(self):
     inputID=self.inputID

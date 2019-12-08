@@ -33,6 +33,8 @@ class ReportSerializer(serializers.ModelSerializer):
   class Meta:
     model=Report
     fields = '__all__'
+    optional_fields = ['finyear', ]
+
    #fields=[
    #  'id',
    #  'location',

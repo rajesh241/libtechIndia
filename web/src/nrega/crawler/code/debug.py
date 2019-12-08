@@ -40,6 +40,23 @@ def main():
   args = argsFetch()
   logger = loggerFetch(args.get('log_level'))
   if args['test']:
+    objs=TaskQueue.objects.all().order_by("-id")
+    for obj in objs:
+      logger.info(obj.id)
+      obj.delete()
+    exit()
+    objs=Report.objects.filter(finyear='')
+    j=len(objs)
+    logger.info(f"number of objects {j}")
+    for obj in objs:
+      logger.info(f"{j}   {obj.id}")
+      j=j-1
+      obj.finyear='NA'
+      obj.save()
+    exit(0)
+    obj.finyear=None
+    obj.save()
+    exit(0)
     ltArray=[1]
     objs=Location.objects.filter(libtechTag__in=ltArray)
     s=''
