@@ -40,6 +40,27 @@ def main():
   args = argsFetch()
   logger = loggerFetch(args.get('log_level'))
   if args['test']:
+    state_codes = []
+    column_headers = ["code", "report_type", "finyear", "report_url"]
+    states = Location.objects.filter(locationType='state')
+    for state in states:
+      state_codes.append(state.code)
+ #   state_codes = ["34"]
+    for state_code in state_codes:
+      csv_array = []
+      report_types = ["NICRejectedTransactionsCoBankURL",
+                      "NICRejectedTransactionsPostURL",
+                      "NICRejectedTransactionsURL"]
+      for report_type in report_types:
+        objs = Report.objects.filter(reportType=report_type,
+                                     location__stateCode = state_code)
+        for obj in objs:
+          logger.info(obj.location.code)
+          a = [obj.location.code, report_type, obj.finyear, obj.reportURL]
+          csv_array.append(a)
+      df = pd.DataFrame(csv_array, columns=column_headers)
+      df.to_csv(f"dump/{state_code}.csv")
+    exit(0)
     objs=TaskQueue.objects.all().order_by("-id")
     for obj in objs:
       logger.info(obj.id)

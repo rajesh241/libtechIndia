@@ -2,6 +2,18 @@
 from django.db import models
 
 # Create your models here.
+class LibtechTag(models.Model):
+    """This is class to tags
+    Tags can be applied to locations or reports
+    """
+    name = models.CharField(max_length=256)
+    class Meta:
+        """To define meta data attributes"""
+        db_table = 'libtechtag'
+    def __str__(self):
+        """Default str method for the class"""
+        return f"{self.name}"
+
 class Location(models.Model):
     """This class holds all the meta data related to location"""
     name = models.CharField(max_length=256)
@@ -24,8 +36,9 @@ class Location(models.Model):
     block_name = models.CharField(max_length=256, null=True, blank=True)
     panchayat_code = models.CharField(max_length=10, null=True, blank=True)
     panchayat_name = models.CharField(max_length=256, null=True, blank=True)
-    filepath = models.CharField(max_length=2048, null=True, blank=True)
+    s3_filepath = models.CharField(max_length=2048, null=True, blank=True)
     is_nic = models.BooleanField(default=True)
+    libtech_tag = models.ManyToManyField(LibtechTag)
     remarks = models.TextField(blank=True, null=True)
     class Meta:
         """To define meta data attributes"""

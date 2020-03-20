@@ -19,6 +19,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls, name='login'),
+    path('api/public/', include('nrega.api.urls')),
     path('api/user/', include('user.urls')),
     path('api/passwordreset/', include('passwordreset.urls')),
 ]

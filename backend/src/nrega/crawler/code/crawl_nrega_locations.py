@@ -24,6 +24,8 @@ def args_fetch():
     parser.add_argument('-l', '--log-level', help='Log level defining verbosity', required=False)
     parser.add_argument('-c', '--crawl', help='crawl',
                         required=False, action='store_const', const=1)
+    parser.add_argument('-f', '--fixfilepath', help='fix broken file paths',
+                        required=False, action='store_const', const=1)
     parser.add_argument('-lt', '--location_type', help='location type', required=False)
     args = vars(parser.parse_args())
     return args
@@ -33,6 +35,20 @@ def main():
     """Main Module of this program"""
     args = args_fetch()
     logger = logger_fetch(args.get('log_level'))
+    if args['fixfilepath']:
+        location_type = args['location_type']
+        logger.info("fixing broken file paths")
+        objs = Location.objects.all()
+        objs = Location.objects.filter(location_type = location_type)
+        j = len(objs)
+        for obj in objs:
+            logger.info(f"processing j - {j}")
+            j=j-1
+            base_file_path = obj.parent_location.s3_filepath
+            s3_filepath = f"{base_file_path[:-14]}/{obj.slug}/DATA/reports/"
+            obj.s3_filepath = s3_filepath
+            obj.save()
+
     if args['crawl']:
         scheme = 'nrega'
         location_type = args['location_type']
@@ -59,13 +75,18 @@ def main():
         queryset = Location.objects.filter(location_type=parent_location_type)
         queryset = Location.objects.filter(location_type=parent_location_type,
                                           id__gt=1395)
+
+        queryset = Location.objects.filter(location_type=parent_location_type,
+                                           id=500)
         #queryset = Location.objects.filter(location_type=parent_location_type)[:1]
         for parent_location in queryset:
             urls_to_process = []
             base_url = parent_location.nic_url
-            parent_file_path = parent_location.filepath
+            parent_file_path = parent_location.s3_filepath
             parent_display_name = parent_location.display_name
+            logger.info(f"parent file path is {parent_file_path}")
             base_filepath = parent_file_path.rstrip('/DATA/reports/')
+            logger.info(f"base_filepath is {base_filepath}")
             myhtml = None
             logger.info(f"Current Processing {base_url}")
             if 'http://nrega.nic.in' in base_url:
@@ -125,7 +146,8 @@ def main():
                 else:
                     my_location.is_nic = True
                 filepath = f"{base_filepath}/{slug}/DATA/reports/"
-                my_location.filepath = filepath
+                logger.info(f"file paht is {filepath}")
+                my_location.s3_filepath = filepath
                 my_location.save()
 
     logger.info("...END PROCESSING")

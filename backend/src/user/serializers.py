@@ -52,7 +52,7 @@ class UserSerializer(serializers.ModelSerializer):
     def send_account_activation_email(self, request, user):
         text_content = 'Account Activation Email'
         subject = 'Email Activation'
-        template_name = "activation.html"
+        template_name = "email/activation.html"
         from_email = settings.EMAIL_HOST_USER
         recipients = [user.email]
         kwargs = {
@@ -63,6 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
         activate_url = str(kwargs)
         context = {
             'user': user,
+            'web_name' : settings.WEB_NAME,
             'activate_url': activate_url
         }
         html_content = render_to_string(template_name, context)
