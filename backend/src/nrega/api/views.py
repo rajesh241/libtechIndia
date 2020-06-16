@@ -4,10 +4,11 @@ from django.views.generic import View
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
 from rest_framework import mixins, generics, permissions
-from nrega.models import Location, Report, LibtechTag
+from nrega.models import Location, Report, LibtechTag, TaskQueue
 from nrega.mixins import HttpResponseMixin
 from .serializers import (LocationSerializer,
                           ReportSerializer,
+                          TaskQueueSerializer,
                           LibtechTagSerializer)
 from .utils import is_json
 
@@ -54,6 +55,7 @@ class LibtechTagAPIView(HttpResponseMixin,
 
 class LocationAPIView(HttpResponseMixin,
                       mixins.RetrieveModelMixin,
+                      mixins.UpdateModelMixin,
                       generics.ListAPIView):
     """API view Class for Location. This defines only get method"""
     #permission_classes = [permissions.IsAuthenticatedOrReadOnly, xIsAdminOwnerOrReadOnly]
@@ -80,6 +82,14 @@ class LocationAPIView(HttpResponseMixin,
         if self.input_id is not None:
             return self.retrieve(request, *args, **kwargs)
         return super().get(request, *args, **kwargs)
+    def patch(self, request, *args, **kwargs):
+        """patch method will update the object, with the specified fields. All
+        fields need not be present"""
+        self.input_id = get_id_from_request(request)
+        if self.input_id is None:
+            data = json.dumps({"message":"Need to specify the ID for this method"})
+            return self.render_to_response(data, status="404")
+        return self.partial_update(request, *args, **kwargs)
 
 class ReportFilter(filters.FilterSet):
  #   min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
@@ -171,6 +181,65 @@ class ReportAPIView(HttpResponseMixin,
                 data = json.dumps({"message":"Need to specify the ID for this method"})
                 return self.render_to_response(data, status="404")
             self.input_id = input_id
+        return self.partial_update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Will delete the retrieved object"""
+        self.input_id = get_id_from_request(request)
+        if self.input_id is None:
+            data = json.dumps({"message":"Need to specify the ID for this method"})
+            return self.render_to_response(data, status="404")
+        return self.destroy(request, *args, **kwargs)
+
+class TaskQueueAPIView(HttpResponseMixin,
+                    mixins.CreateModelMixin,
+                    mixins.DestroyModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.UpdateModelMixin,
+                    generics.ListAPIView):
+    """API View for the Report Model"""
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    serializer_class = TaskQueueSerializer
+    passed_id = None
+    input_id = None
+    search_fields = ('location_code')
+    filter_fields = ('is_done', 'location_code', 'scheme', 'status')
+    ordering_fields = ('location_code', 'id', 'priority', 'updated')
+    queryset = TaskQueue.objects.all()
+    def get_object(self):
+        input_id = self.input_id
+        queryset = self.get_queryset()
+        obj = None
+        if input_id is not None:
+            obj = get_object_or_404(queryset, id=input_id)
+            self.check_object_permissions(self.request, obj)
+        return obj
+    def get(self, request, *args, **kwargs):
+        self.input_id = get_id_from_request(request)
+        if self.input_id is not None:
+            return self.retrieve(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Post method would create a report object"""
+        return self.create(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """put method will update the report object. All fields need to be
+        present"""
+        self.input_id = get_id_from_request(request)
+        if self.input_id is None:
+            data = json.dumps({"message":"Need to specify the ID for this method"})
+            return self.render_to_response(data, status="404")
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        """patch method will update the object, with the specified fields. All
+        fields need not be present"""
+        self.input_id = get_id_from_request(request)
+        if self.input_id is None:
+            data = json.dumps({"message":"Need to specify the ID for this method"})
+            return self.render_to_response(data, status="404")
         return self.partial_update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):

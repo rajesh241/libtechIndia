@@ -31,6 +31,19 @@ def main():
     args = args_fetch()
     logger = logger_fetch(args.get('log_level'))
     if args['test']:
+        csv_array = []
+        headers = ["location_type", "code", "state", "district", "block",
+                   "panchayat"]
+        objs = Location.objects.filter(scheme="nrega")
+        for obj in objs:
+            logger.info(obj.id)
+            a= [obj.location_type, obj.code, obj.state_name, obj.district_name,
+                obj.block_name, obj.panchayat_name]
+            csv_array.append(a)
+
+        df = pd.DataFrame(csv_array, columns=headers)
+        df.to_csv("nrega_locations.csv")
+        exit(0)
         logger.info("Testing phase")
         scheme = "rayatubarosa"
         vskp_code = '520'

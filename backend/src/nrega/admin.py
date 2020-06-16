@@ -1,11 +1,11 @@
 """Defination for Admin Interface"""
 from django.contrib import admin
-from .models import Location, Report, LibtechTag
+from .models import Location, Report, LibtechTag, TaskQueue
 # Register your models here.
 class LocationModelAdmin(admin.ModelAdmin):
     """Model Adminf or class Location"""
-    list_display = ["id", "name", "english_name", "code", "crawl_ip"]
-    list_filter = ["location_type", "scheme"]
+    list_display = ["id", "name", "code", "accuracy"]
+    list_filter = ["is_data_available", "location_type", "scheme"]
     search_fields = ["code", "name"]
     readonly_fields = ["parent_location"]
     class Meta:
@@ -25,6 +25,16 @@ class ReportModelAdmin(admin.ModelAdmin):
     readonly_fields = ["location"]
     class Meta:
         model = Report
+
+class TaskQueueModelAdmin(admin.ModelAdmin):
+    """Model Admin for Task Queue"""
+    list_display = ["id", "location_code", "report_type", "status",
+                    "process_name"]
+    list_filter = ["status", "report_type", "is_error", "is_done"]
+    search_fields = ["location_code"]
+    class Meta:
+        model = TaskQueue
 admin.site.register(Location, LocationModelAdmin)
 admin.site.register(Report, ReportModelAdmin)
 admin.site.register(LibtechTag, LibtechTagModelAdmin)
+admin.site.register(TaskQueue, TaskQueueModelAdmin)
