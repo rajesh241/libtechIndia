@@ -121,7 +121,7 @@ class ReportAPIView(HttpResponseMixin,
     serializer_class = ReportSerializer
     passed_id = None
     input_id = None
-    search_fields = ('code')
+    search_fields = ('location__code')
     ordering_fields = ('code', 'id')
     filterset_class = ReportFilter
     queryset = Report.objects.all()
@@ -131,7 +131,7 @@ class ReportAPIView(HttpResponseMixin,
         obj = None
         if input_id is not None:
             obj = get_object_or_404(queryset, id=input_id)
-            self.check_object_permissions(self.request, obj)
+            #self.check_object_permissions(self.request, obj)
         return obj
     def get(self, request, *args, **kwargs):
         self.input_id = get_id_from_request(request)

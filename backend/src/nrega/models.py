@@ -1,6 +1,7 @@
 """This module will have model definations for nrega"""
 #pylint: disable-msg = too-few-public-methods
 from django.db import models
+from django_mysql.models import JSONField
 
 # Create your models here.
 class LibtechTag(models.Model):
@@ -40,6 +41,7 @@ class Location(models.Model):
     s3_filepath = models.CharField(max_length=2048, null=True, blank=True)
     is_nic = models.BooleanField(default=True)
     libtech_tag = models.ManyToManyField(LibtechTag)
+    data_json = JSONField(null=True, blank=True)  # requires Django-Mysql package
     accuracy = models.DecimalField(null=True, blank=True,  max_digits=5, decimal_places=2)
     last_crawl_date = models.DateTimeField(null=True, blank=True)
     is_data_available = models.BooleanField(default=False)
@@ -81,6 +83,7 @@ class TaskQueue(models.Model):
     status = models.CharField(max_length=256, default='inQueue')
     priority = models.PositiveSmallIntegerField(default=100)
     report_url = models.URLField(max_length=2048, blank=True, null=True)
+    force_download = models.BooleanField(default=False)
     is_error = models.BooleanField(default=False)
     is_done = models.BooleanField(default=False)
     response = models.CharField(max_length=256, null=True, blank=True)

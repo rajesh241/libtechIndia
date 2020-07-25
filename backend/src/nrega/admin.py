@@ -4,7 +4,7 @@ from .models import Location, Report, LibtechTag, TaskQueue
 # Register your models here.
 class LocationModelAdmin(admin.ModelAdmin):
     """Model Adminf or class Location"""
-    list_display = ["id", "name", "code", "accuracy"]
+    list_display = ["id", "name", "code", "display_name"]
     list_filter = ["is_data_available", "location_type", "scheme"]
     search_fields = ["code", "name"]
     readonly_fields = ["parent_location"]
