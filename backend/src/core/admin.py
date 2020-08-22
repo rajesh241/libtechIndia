@@ -7,7 +7,6 @@ from django.utils.translation import gettext as _
 
 
 from core import models
-
 # Register your models here.
 
 class UserAdmin(BaseUserAdmin):
@@ -15,7 +14,10 @@ class UserAdmin(BaseUserAdmin):
     list_display = ['email', 'name']
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Personal Info'), {'fields': ('name', 'user_role', )}),
+        (_('Personal Info'), {'fields': ('name', 'user_role', 'avatar',
+                                         'phone', 'username',
+                                         'login_attempt_count', 'is_locked',
+                                         'avatar_url')}),
         (
             _('Permissions'),
             {'fields': ('is_active', 'is_staff', 'is_superuser')}

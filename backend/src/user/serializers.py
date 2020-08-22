@@ -1,6 +1,9 @@
 """
 Serializer Module for User
 """
+import base64
+import pyotp
+import datetime
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import ugettext_lazy as _
 from django.utils.http import urlsafe_base64_encode
@@ -10,34 +13,51 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
+from rest_framework import exceptions
+from django.db import IntegrityError
+from rest_framework.exceptions import ValidationError
 
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from user.otp import generate_otp
+user_role_list = ["student", "parent", "admin", "superadmin"]
+default_user_role = "student"
+####Here we define various error Messages
+msg_invalid_user_role = f"User role can only be one of {user_role_list}"
+msg_user_role_not_allowed = f"You dont have sufficient permissions to set this user role"
 
-class UserSerializer(serializers.ModelSerializer):
-    """ Serializer for the user object """
+
+
+class ItemSerializer(serializers.Serializer):
+    """Your Custom Serializer"""
+    # Gets a list of Integers
+    user_ids = serializers.ListField(child=serializers.CharField())
+
+class BulkCreateListSerializer(serializers.ListSerializer):
+    """BulkCreate Serializer"""
+    def create(self, validated_data):
+        result = [self.child.create(attrs) for attrs in validated_data]
+        try:
+            self.child.Meta.model.objects.bulk_create(result)
+        except IntegrityError as e:
+            raise ValidationError(e)
+        return result
+
+class ModifyUserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
     class Meta:
-        """Default Meta Class"""
         model = get_user_model()
-        fields = ('email', 'password', 'password2', 'name')
-        extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
-
+        fields = ['name', 'avatar', 'email', 'provider', 'password',
+                  'password2', 'avatar_url']
+        extra_kwargs = {'password': {'write_only': True,
+                                     'min_length': 5}
+                       }
     def validate(self, data):
-        print(f"data is {data}")
         pass1 = data.get('password')
         pass2 = data.pop('password2', None)
         if pass1 != pass2:
             raise serializers.ValidationError("Passwords must match")
         return data
-
-    def create(self, validated_data):
-        """Create function of serializer"""
-        my_user = get_user_model().objects.create_user(**validated_data)
-        request=self.context.get('request'),
-        self.send_account_activation_email(request, my_user)
-        return my_user
-
     def update(self, instance, validated_data):
         """Update function of serializer"""
         password = validated_data.pop("password", None)
@@ -48,10 +68,192 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
 
         return user
+def autogenerate_email(phone, username):
+    """This function will create an place holder email Address from phone and
+    username"""
+    domain_name = settings.DUMMY_DOMAIN_FOR_EMAIL
+    email = None
+    if phone is not None:
+        email = f"ph_{phone}@{domain_name}"
+    elif username is not None:
+        email = f"un_{username}@{domain_name}"
+    return email
 
+class UserSerializer(serializers.ModelSerializer):
+    """ Serializer for the user object """
+    password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+   #def __init__(self, *args, **kwargs):
+   #    super(UserSerializer, self).__init__(*args, **kwargs) # call the super() 
+   #    for field in self.fields: # iterate over the serializer fields
+   #        self.fields[field].error_messages['required'] = '%s field is required'%field # set the custom error message
+    class Meta:
+        """Default Meta Class"""
+        model = get_user_model()
+        fields = ('id', 'email', 'password', 'password2', 'name', 'avatar',
+                  'is_active', 'is_locked', 'provider'
+                  ,'avatar_url', 'user_role',
+                  'login_attempt_count', 'username', 'phone')
+        extra_kwargs = {'password': {'write_only': True,
+                                     'min_length': 5,
+                                     'error_messages': { 'blank': 'Password field is required'}
+                                    },
+                        'name' :  { 'required' : False},
+                        'email' : {'required' : False, 'allow_blank':True},
+                        'username' : {'allow_blank':True},
+                        'phone' : {'allow_blank':True}
+                       }
+
+    def to_representation(self, instance):
+       """Convert 'email' to blank in case of autogenerated email"""
+       ret = super().to_representation(instance)
+       if instance.autogenerated_email == True:
+           ret['email'] = ''
+       return ret
+
+    def validate(self, data):
+        request=self.context.get('request')
+        print(f"Inside validate {data}")
+        pass1 = data.get('password')
+        pass2 = data.pop('password2', None)
+        if pass1 != pass2:
+            raise serializers.ValidationError("Passwords must match")
+        user_role = data.get("user_role", None)
+        if user_role is not None:
+            if not(request.user.is_superuser or request.user.is_staff):
+                if ( (user_role == "superadmin") or (user_role == "admin")):
+                    raise serializers.ValidationError(msg_user_role_not_allowed)
+                data.pop("is_locked", None)
+                data.pop("login_attempt_count", None)
+                data.pop('is_active',None)
+            elif not(request.user.is_superuser):
+                if user_role == "superadmin":
+                    raise serializers.ValidationError(msg_user_role_not_allowed)
+
+        if user_role == "superadmin":
+            data["is_superuser"] = True
+            data["is_staff"] = True
+        if user_role =="admin":
+            data["is_staff"] = True
+        return data
+
+    def create(self, validated_data):
+        """Create function of serializer"""
+        print(f"I am in create method {validated_data}")
+        email = validated_data.get('email', None)
+        phone = validated_data.get('phone', None)
+        username = validated_data.get('username', None)
+        if email == '':
+            email = None
+        if phone == '':
+            phone = None
+            validated_data.pop('phone', None)
+        if username == '':
+            username = None
+            validated_data.pop('username', None)
+
+        if (email is None) and (phone is None) and (username is None):
+            raise serializers.ValidationError("Either one of email, phone or username must be provided")
+
+        if email is None:
+            email = autogenerate_email(phone, username)
+            validated_data['email'] = email
+            validated_data['autogenerated_email'] = True
+        else:
+            validated_data['autogenerated_email'] = False
+
+        user_role = validated_data.get("user_role", None)
+        if ( (user_role is not None) and (user_role not in user_role_list)):
+            raise serializers.ValidationError(msg_invalid_user_role)
+        send_email = False
+        otp_required = False
+        is_active = True
+
+        request=self.context.get('request')
+        if not(request.user.is_superuser or request.user.is_staff):
+            validated_data.pop('is_staff',None)
+            validated_data.pop('is_superuser',None)
+            validated_data.pop('is_locked',None)
+            validated_data.pop('is_active',None)
+            validated_data.pop('is_user_role',None)
+            validated_data.pop('login_attempt_count',None)
+            validated_data.pop('user_role',None)
+            is_active = False
+            ##We will send email only if email is not autogenerated
+            if validated_data['autogenerated_email'] == False:
+                send_email = True
+            elif phone is not None:
+                otp_required = True
+                print("We will be sending OTP")
+        elif not(request.user.is_superuser):
+            validated_data.pop('is_superuser',None)
+
+        validated_data['is_active'] = is_active
+        my_user = get_user_model().objects.create_user(**validated_data)
+        if (send_email):
+            self.send_account_activation_email(request, my_user)
+        if (otp_required):
+            generate_otp(my_user.phone)
+        return my_user
+
+    def update(self, instance, validated_data):
+        """Update function of serializer"""
+        print(f"I am in update function {validated_data}")
+        email = validated_data.get('email', None)
+        phone = validated_data.get('phone', instance.phone)
+        username = validated_data.get('username', instance.username)
+        if phone == '':
+            validated_data['phone'] = None
+        if username == '':
+            validated_data['username'] = None
+        if email is not None:##If email needs to be updated
+            if email == "":
+            #If user wants to delete its email,we need to check if either of phone or username is present
+                if (phone is None) and (username is None):
+                    raise serializers.ValidationError("If you delete email, either of username or phone must be present")
+                else:
+                    email = autogenerate_email(phone, username)
+                    validated_data['email'] = email
+                    validated_data['autogenerated_email'] = True
+
+
+        password = validated_data.pop("password", None)
+        request=self.context.get('request')
+        if not(request.user.is_superuser):
+            validated_data.pop('is_superuser',None)
+        user = super().update(instance, validated_data)
+
+        if password:
+            user.set_password(password)
+            user=user.save()
+        is_locked = validated_data.get('is_locked',None)
+        if (is_locked is not None) and (not is_locked):
+            user.login_attempt_count = 0
+            user.save()
+        if user.autogenerated_email == True:
+            auto_email = autogenerate_email(user.phone, user.username)
+            if auto_email != user.email:
+                user.email = auto_email
+                user.save()
+        return user
+    
+   #def create_otp_required(self, request, user):
+   #    """This method will generate OTP and send it to the user via phone"""
+   #    phone = user.phone
+   #    otp_counter = user.otp_counter + 1
+   #    keygen_class = GenerateKey()
+   #    key = base64.b32encode(keygen_class.return_key(phone).encode())
+   #    OTP = pyotp.HOTP(key)
+   #    print(f"Generated OTP  {OTP.at(otp_counter)}")
+   #    expiration = datetime.datetime.now() + datetime.timedelta(minutes = int(settings.OTP_EXPIRATION_THRESHOLD))
+   #    user.otp_counter = otp_counter
+   #    user.otp_expiration = expiration
+   #    user.save()
+   #    
+
+        
     def send_account_activation_email(self, request, user):
         text_content = 'Account Activation Email'
-        subject = 'Email Activation'
+        subject = 'Email Verfication'
         template_name = "email/activation.html"
         from_email = settings.EMAIL_HOST_USER
         recipients = [user.email]
@@ -60,7 +262,7 @@ class UserSerializer(serializers.ModelSerializer):
             "token": default_token_generator.make_token(user)
         }
         print(str(kwargs))
-        activate_url = str(kwargs)
+        activate_url = f"{settings.FRONTEND_REGCONFIRM_URL}?uidb64={kwargs['uidb64']}&token={kwargs['token']}"
         context = {
             'user': user,
             'web_name' : settings.WEB_NAME,
@@ -97,17 +299,96 @@ class AuthTokenSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
 
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Custome token serializer to include custom user fields in the token"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = False
+        self.fields['password'].required = False
+    @classmethod
+    def get_token(cls, user):
+        """Overriding get token method"""
+        token = super(MyTokenObtainPairSerializer, cls).get_token(user)
+        # Add custom claims
+        token['id'] = user.id
+        token['ur'] = user.user_role
+        return token
+    def validate(self, attrs):
+        email = attrs.get("email", None)
+        password = attrs.get("password", None)
+        if email is None:
+            attrs.update({'email': ''})
+        if password is None:
+            attrs.update({'password' : ''})
+        data = super().validate(attrs)
+        return data
+
+class MyTokenObtainPairSerializer1(TokenObtainPairSerializer):
     """Custome token serializer to include custom user fields in the token"""
     @classmethod
     def get_token(cls, user):
         """Overriding get token method"""
         token = super(MyTokenObtainPairSerializer, cls).get_token(user)
         # Add custom claims
-        token['name'] = user.email
+        token['id'] = user.id
+        token['ur'] = user.user_role
         return token
-
+    def validate(self, attrs):
+        username_field = get_user_model().USERNAME_FIELD
+        username = attrs[username_field]
+        try:
+            user = get_user_model().objects.get(**{username_field: username})
+        except:
+            user = None
+        if user is None:
+            user = get_user_model().objects.filter(phone=username).first()
+        if user is None:    
+            user = get_user_model().objects.filter(username=username).first()
+        if user:
+            username = user.email
+            attrs[username_field] = user.email
+        if user:
+            print(f"user id {user.id} name {user.name}")
+            if user.is_locked:
+                message = "Your account has been locked. Kindly contact system administrator"
+                raise exceptions.AuthenticationFailed(message)
+            if not(user.is_active):
+                message = "Your email is not verified. We have sent you an email for confirmation. Kindly click on the confirmation link"
+                raise exceptions.AuthenticationFailed(message)
+            password = attrs.get('password')
+            authuser = authenticate(
+                request=self.context.get('request'),
+                username=username,
+                password=password
+            )
+            if user.is_superuser:
+                if not authuser:
+                    message="Incorrect password"
+                    raise exceptions.AuthenticationFailed(message)
+                    
+            user.login_attempt_count = user.login_attempt_count + 1
+            if user.login_attempt_count >= 3:
+                user.is_locked = True
+            user.save()
+            if not authuser: 
+                if user.login_attempt_count == 3:
+                    message=f"You have already made three failed login attempts. Your account has been locked. Kindly contact system administrator to reactivate your account"
+                else:
+                    message = f"Incorrect password. If your login fails for three times your account will be locked. Your have already made {user.login_attempt_count} attempts."
+                raise exceptions.AuthenticationFailed(message)
+        data = super().validate(attrs)
+        user.login_attempt_count = 0
+        user.is_locked = False
+        user.save()
+        return data
+         # do your extra validation here
+   #    
+   #    if not user.email_verification:
+   #        raise exceptions.AuthenticationFailed({"status":"fail", "message":"verify email"})
+   #    login(request, user)
 
 class RegistrationActivationSerializer(serializers.Serializer):
     token = serializers.CharField()
     uidb64 = serializers.CharField()
+
