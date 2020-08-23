@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Location, LibtechTag
+from .models import Location, LibtechTag, Report
 
 # Register your models here.
 
@@ -19,5 +19,14 @@ class LibtechTagModelAdmin(admin.ModelAdmin):
         model = LibtechTag
 
 
+class ReportModelAdmin(admin.ModelAdmin):
+    """Model Adminf or class Report"""
+    list_display = ["id", "location", "report_type", "finyear"]
+    list_filter = ["finyear", "report_type"]
+    search_fields = ["location__code", "location__name"]
+    readonly_fields = ["location"]
+    class Meta:
+        model = Report
 admin.site.register(Location, LocationModelAdmin)
 admin.site.register(LibtechTag, LibtechTagModelAdmin)
+admin.site.register(Report, ReportModelAdmin)

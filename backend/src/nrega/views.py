@@ -143,7 +143,7 @@ class ReportAPIView(HttpResponseMixin,
     input_id = None
     search_fields = ('location__code')
     ordering_fields = ('code', 'id')
-    filterset_class = ReportFilter
+   # filterset_class = ReportFilter
     queryset = Report.objects.all()
     def get_object(self):
         input_id = self.input_id
