@@ -2,6 +2,7 @@ import json
 from django.views.generic import View
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
+from django.db.models import Count
 from rest_framework import (generics, authentication, permissions,
                             status, mixins, exceptions)
 from rest_framework.views import APIView
@@ -42,7 +43,22 @@ class TagLocationsAPIView(APIView):
         status = "Tagged"
         return Response({"status": status})
 
-
+class ReportAggAPIView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def get(self, request, *args, **kwargs):
+        filter_dict = {}
+        libtech_tag__name = request.query_params.get('libtech_tag__name', None)
+        report_type = request.query_params.get('report_type', None)
+        location_type = request.data.get('location_type', None)
+        if libtech_tag__name is not None:
+            filter_dict["libtech_tag__name"] = libtech_tag__name
+        if report_type is not None:
+            filter_dict["report_type"] = report_type
+        if location_type is not None:
+            filter_dict["location_type"] = location_type
+        queryset = Report.objects.filter(**filter_dict).values("report_type").annotate(total=Count('pk'))
+        return Response({"results": queryset})
+    
 class LibtechTagAPIView(HttpResponseMixin,
                       mixins.RetrieveModelMixin,
                       generics.ListAPIView):
@@ -109,24 +125,6 @@ class LocationAPIView(HttpResponseMixin,
             data = json.dumps({"message":"Need to specify the ID for this method"})
             return self.render_to_response(data, status="404")
         return self.partial_update(request, *args, **kwargs)
-
-class ReportFilter(filters.FilterSet):
- #   min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
- #   max_price = filters.NumberFilter(field_name="price", lookup_expr='lte')
-
-    class Meta:
-        model = Report
-        fields = ('report_type', 'location__state_code', 'location__code',
-                  'location', 'finyear', 'location__location_type',
-                  'location__parent_location__code')
-    @property
-    def qs(self):
-        parent_qs = super(ReportFilter, self).qs
-        return parent_qs
-       #if 'finyear' in self.request.query_params:
-       #    return parent_qs
-       #else:
-       #    return parent_qs.filter(finyear='NA')
 
 
 

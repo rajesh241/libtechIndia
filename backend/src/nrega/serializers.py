@@ -20,6 +20,7 @@ def report_post_save_operation(obj):
     """Report  Post save operation"""
     obj.location_code = obj.location.code
     obj.location_type = obj.location.location_type
+    obj.location_name = obj.location.display_name
     myTags = obj.libtech_tag.all()
     for tag in myTags:
         obj.libtech_tag.remove(tag)

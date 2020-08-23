@@ -1,6 +1,6 @@
 """Simple utility functions for views"""
 import json
-from nrega.models import Location
+from nrega.models import Location, Report
 
 def is_json(json_data):
     """Determines if the passed data in json format"""
@@ -11,12 +11,18 @@ def is_json(json_data):
         valid_json = False
     return valid_json
 
+def tag_location_reports(location_obj, tag):
+    """Will tag all reports of the given location"""
+    objs = Report.objects.filter(location=location_obj)
+    for obj in objs:
+        obj.libtech_tag.add(tag)
 def tag_locations(locations, tag, recursive=True):
     """This function will tag the locations recursively"""
     lowest_location_type = 'panchayat'
     objs = Location.objects.filter(code__in = locations)
     for obj in objs:
         obj.libtech_tag.add(tag)
+        tag_location_reports(obj, tag)
     if len(objs) > 0:
         current_location_type = objs[0].location_type
     while (current_location_type != lowest_location_type):
@@ -29,6 +35,7 @@ def tag_locations(locations, tag, recursive=True):
             break
         for obj in objs:
             obj.libtech_tag.add(tag)
+            tag_location_reports(obj, tag)
         current_location_type = objs[0].location_type
 
 

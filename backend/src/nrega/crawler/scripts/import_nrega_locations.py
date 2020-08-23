@@ -11,7 +11,8 @@ from commons import logger_fetch, is_english
 from defines import DJANGO_SETTINGS, STATE_SHORT_CODE_DICT
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", DJANGO_SETTINGS)
 django.setup()
-from nrega.models import Location
+from nrega.models import Location, Report
+from nrega.serializers import report_post_save_operation
 
 def args_fetch():
     '''
@@ -27,6 +28,8 @@ def args_fetch():
                         required=False, action='store_const', const=1)
     parser.add_argument('-lt', '--location_type', help='location type', required=False)
     parser.add_argument('-e', '--export', help='export',
+                        required=False, action='store_const', const=1)
+    parser.add_argument('-ir', '--importReports', help='export',
                         required=False, action='store_const', const=1)
     parser.add_argument('-i', '--import', help='export',
                         required=False, action='store_const', const=1)
@@ -125,6 +128,34 @@ def main():
 #                setattr(my_location, name_param.lower(), name)
 
     logger.info("...END PROCESSING")
+    if args['importReports']:
+        logger.info(f"Importing reports")
+        filename = "/tmp/reports.csv"
+        dataframe = pd.read_csv(filename,  dtype=str)
+        dataframe = dataframe.fillna("")
+        total = len(dataframe)
+        for index, row in dataframe.iterrows():
+            logger.info(f"current processign {total}")
+            total = total - 1
+            location_code = row.get("code")
+            my_location = Location.objects.filter(code=location_code).first()
+            if my_location is None:
+                logger.info(f"Location not found {row}")
+                continue
+            finyear = row.get("finyear")
+            if finyear == "":
+                finyear = "NA"
+            report_type = row.get("report_type")
+            my_report = Report.objects.filter(finyear=finyear,
+                                              location=my_location,
+                                              report_type=report_type).first()
+            if my_report is None:
+                my_report = Report.objects.create(finyear=finyear, location=my_location,
+                                      report_type=report_type)
+            my_report.report_url = row.get("report_url")
+            my_report.excel_url = row.get("excel_url")
+            my_report.save()
+            report_post_save_operation(my_report)
 
 if __name__ == '__main__':
     main()

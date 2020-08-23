@@ -61,6 +61,8 @@ class Report(models.Model):
                                      blank=True)
     location_code = models.CharField(max_length=20, db_index=True, null=True,
                                      blank=True)
+    location_name = models.CharField(max_length=256, db_index=True, blank=True,
+                                    null=True)
     report_type = models.CharField(max_length=256, db_index=True)
     archive_reports = JSONField(null=True, blank=True, default=list)  
     report_url = models.URLField(max_length=2048, blank=True, null=True)
