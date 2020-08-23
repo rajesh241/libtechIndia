@@ -30,7 +30,7 @@ SECRET_KEY = BASE_CONFIG.get('secret_key')
 DEBUG = True
 
 
-ALLOWED_HOSTS = ["f.libtech.in"]
+ALLOWED_HOSTS = ["backend.libtech.in"]
 
 
 # Application definition

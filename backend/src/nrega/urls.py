@@ -4,9 +4,11 @@ from .views import (
     LocationAPIView, 
     LibtechTagAPIView,
 )
+import nrega.views as views
 
 urlpatterns = [ 
-                path('location/', LocationAPIView.as_view()),
-                path('tag/', LibtechTagAPIView.as_view()),
+                path('location/', views.LocationAPIView.as_view()),
+                path('taglocations/', views.TagLocationsAPIView.as_view()),
+                path('tag/', views.LibtechTagAPIView.as_view()),
         ]
 

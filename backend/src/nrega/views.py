@@ -2,12 +2,15 @@ import json
 from django.views.generic import View
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
-from rest_framework import mixins, generics, permissions
+from rest_framework import (generics, authentication, permissions,
+                            status, mixins, exceptions)
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from nrega.models import Location, LibtechTag
 from nrega.mixins import HttpResponseMixin
 from nrega.serializers import (LocationSerializer,
                           LibtechTagSerializer)
-from nrega.utils import is_json
+from nrega.utils import is_json, tag_locations
 
 def get_id_from_request(request):
     """Small function to retrieve the Id from request
@@ -21,6 +24,23 @@ def get_id_from_request(request):
         input_json_id = input_json_data.get("id", None)
     input_id = url_id or input_json_id or None
     return input_id
+
+class TagLocationsAPIView(APIView):
+    permission_classes = (permissions.IsAdminUser,)
+
+    def post(self, request, *args, **kwargs):
+        tag = request.data.get('tag', None)
+        locations = request.data.get('locations', None)
+        recursive = request.data.get('recursive', True)
+        if tag is None:
+            raise exceptions.ValidationError("Tag is Required")
+        my_tag = LibtechTag.objects.filter(name=tag).first()
+        if my_tag is  None:
+            raise exceptions.ValidationError("Tag Does not Exist!!")
+        tag_locations(locations, my_tag, recursive=recursive)
+        status = "Tagged"
+        return Response({"status": status})
+
 
 class LibtechTagAPIView(HttpResponseMixin,
                       mixins.RetrieveModelMixin,
