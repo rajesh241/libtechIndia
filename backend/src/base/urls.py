@@ -26,11 +26,11 @@ from user.views import ModifyUserView
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Kalpakosh API",
+      title="Libtech API",
       default_version='v1',
-      description="API description for Kalpakosh ",
+      description="API description for Libtech ",
       terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="goli@kalpakosh.in"),
+      contact=openapi.Contact(email="rajeshgolani@gmail.com"),
       license=openapi.License(name="BSD License"),
    ),
    public=True,

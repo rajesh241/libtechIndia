@@ -8,6 +8,7 @@ import nrega.views as views
 
 urlpatterns = [ 
                 path('location/', views.LocationAPIView.as_view()),
+                path('report/', views.ReportAPIView.as_view()),
                 path('taglocations/', views.TagLocationsAPIView.as_view()),
                 path('tag/', views.LibtechTagAPIView.as_view()),
         ]
