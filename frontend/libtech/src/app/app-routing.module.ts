@@ -3,7 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 
 import { HomeComponent } from '@pages/home/home.component';
 import { AdminComponent } from '@pages/admin/admin.component';
-
+import { CrawlsComponent } from '@pages/crawls/crawls.component';
 
 const routes: Routes = [
   /* is redirect better? FIXME
@@ -19,6 +19,10 @@ const routes: Routes = [
   {
     path: 'admin',
     component: AdminComponent,
+  },
+  {
+    path: 'crawls',
+    component: CrawlsComponent,
   },
   {
     path: '',

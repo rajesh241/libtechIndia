@@ -15,13 +15,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { HomeComponent } from '@pages/home/home.component';
 import { AdminComponent } from '@pages/admin/admin.component';
+import { CrawlsComponent } from './pages/crawls/crawls.component';
+import { ListComponent } from './pages/crawls/components/list/list.component';
+import { EditComponent } from './pages/crawls/components/edit/edit.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     NavigationComponent,
     HomeComponent,
-    AdminComponent
+    AdminComponent,
+    CrawlsComponent,
+    ListComponent,
+    EditComponent
   ],
   imports: [
     BrowserModule,
