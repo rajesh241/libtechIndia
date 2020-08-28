@@ -1,3 +1,5 @@
+@import 'variable.scss';
+
 .sidenav-container {
   height: 100%;
 }
@@ -7,7 +9,9 @@
 }
 
 .sidenav .mat-toolbar {
-  background: inherit;
+  // background: inherit;  FIXME
+  // background: $accent;
+  background: $primary;
 }
 
 .mat-toolbar.mat-primary {

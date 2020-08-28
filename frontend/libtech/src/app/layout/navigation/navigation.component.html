@@ -3,11 +3,17 @@
       [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
       [mode]="(isHandset$ | async) ? 'over' : 'side'"
       [opened]="(isHandset$ | async) === false">
-    <mat-toolbar>Menu</mat-toolbar>
+    <mat-toolbar color="primary">
+      <!-- <a routerLinkActive="active" routerLink="">LibTech Crawls</a> -->
+      Menu
+    </mat-toolbar>
     <mat-nav-list>
-      <a mat-list-item href="#">Link 1</a>
-      <a mat-list-item href="#">Link 2</a>
-      <a mat-list-item href="#">Link 3</a>
+      <a mat-list-item routerLinkActive="active" routerLink=""
+         *ngIf="authService.isAuthenticated()">Home</a>
+      <a mat-list-item routerLinkActive="active" routerLink="admin"
+         *ngIf="authService.isAuthenticated()">Admin</a>
+      <a mat-list-item routerLinkActive="active" routerLink="crawls"
+         *ngIf="authService.isAuthenticated()">Crawls</a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>
@@ -17,10 +23,10 @@
         aria-label="Toggle sidenav"
         mat-icon-button
         (click)="drawer.toggle()"
-        *ngIf="isHandset$ | async">
+        >
         <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
       </button>
-      <span>libtech</span>
+      <span>Crawls Dashboard</span>
     </mat-toolbar>
     <!-- Add Content Here -->
     <ng-content></ng-content>

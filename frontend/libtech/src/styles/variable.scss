@@ -1,0 +1,13 @@
+/*
+ * Add your scss variables here and access using -
+ *     @import 'variables.scss';
+ * in any .scss file you wish to extend
+ */
+
+$accent: #0093ff;
+$primary: #3f51b5;
+
+%uppercase {
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+}
