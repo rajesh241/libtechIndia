@@ -15,9 +15,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { HomeComponent } from '@pages/home/home.component';
 import { AdminComponent } from '@pages/admin/admin.component';
-import { CrawlsComponent } from './pages/crawls/crawls.component';
-import { ListComponent } from './pages/crawls/components/list/list.component';
-import { EditComponent } from './pages/crawls/components/edit/edit.component';
+import { CrawlsComponent } from '@pages/crawls/crawls.component';
+import { UsersComponent } from '@pages/users/users.component';
+import { LoginComponent } from '@pages/users/components/login/login.component';
 
 @NgModule({
   declarations: [
@@ -26,8 +26,8 @@ import { EditComponent } from './pages/crawls/components/edit/edit.component';
     HomeComponent,
     AdminComponent,
     CrawlsComponent,
-    ListComponent,
-    EditComponent
+    UsersComponent,
+    LoginComponent
   ],
   imports: [
     BrowserModule,

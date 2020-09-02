@@ -13,4 +13,9 @@ export class AuthService {
     console.log('AuthService.isAuthenticated()');
     return true;
   }
+
+  isLoggedIn() {
+    console.log('AuthService.isAuthenticated()');
+    return true;
+  }
 }
