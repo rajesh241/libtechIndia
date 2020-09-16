@@ -19,12 +19,23 @@ export class UserListComponent implements AfterViewInit, OnInit {
   displayedColumns = ['id', 'name'];
 
   ngOnInit() {
+    console.log(`UserListComponent.ngOnInit()`);
     this.dataSource = new UserListDataSource();
   }
 
   ngAfterViewInit() {
+    console.log(`UserListComponent.ngAfterViewInit()`);
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
     this.table.dataSource = this.dataSource;
+  }
+
+  rowClicked(row) {
+    console.log(`UserListComponent.rowClicked(${row})`, row);
+  }
+
+  universalFilter(filterValue: string) {
+    console.log(`UserListComponent.universalFilter(${filterValue})`);
+    // MatDataSource has filter FIXME - this.dataSource.filter = filterValue.trim().toLowerCase();
   }
 }

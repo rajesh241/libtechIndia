@@ -1,4 +1,9 @@
 <div class="mat-elevation-z8" padding="0 5px">
+  <!-- After login in form perhaps
+  <mat-form-field>
+    <input (keyup)="universalFilter($event.target.value)" matInput placeholder="Universal Filter">
+  </mat-form-field>
+  -->
   <table mat-table class="full-width-table" matSort aria-label="Elements">
     <!-- Id Column -->
     <ng-container matColumnDef="id">
@@ -13,7 +18,7 @@
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr mat-row (click)="rowClicked(row)" *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
 
   <mat-paginator #paginator

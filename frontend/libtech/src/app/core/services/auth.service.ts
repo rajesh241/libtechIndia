@@ -10,7 +10,7 @@ export class AuthService {
   }
 
   isAuthenticated() {
-    console.log('AuthService.isAuthenticated()');
+    // console.log('AuthService.isAuthenticated()');
     return true;
   }
 
