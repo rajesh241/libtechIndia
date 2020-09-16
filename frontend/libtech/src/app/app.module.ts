@@ -18,6 +18,10 @@ import { AdminComponent } from '@pages/admin/admin.component';
 import { CrawlsComponent } from '@pages/crawls/crawls.component';
 import { UsersComponent } from '@pages/users/users.component';
 import { LoginComponent } from '@pages/users/components/login/login.component';
+import { UserListComponent } from './pages/users/components/user-list/user-list.component';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
 
 @NgModule({
   declarations: [
@@ -27,7 +31,8 @@ import { LoginComponent } from '@pages/users/components/login/login.component';
     AdminComponent,
     CrawlsComponent,
     UsersComponent,
-    LoginComponent
+    LoginComponent,
+    UserListComponent
   ],
   imports: [
     BrowserModule,
@@ -39,7 +44,10 @@ import { LoginComponent } from '@pages/users/components/login/login.component';
     MatButtonModule,
     MatSidenavModule,
     MatIconModule,
-    MatListModule
+    MatListModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule
   ],
   providers: [],
   bootstrap: [AppComponent]
