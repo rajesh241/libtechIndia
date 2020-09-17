@@ -1,13 +1,26 @@
 import { DataSource } from '@angular/cdk/collections';
+import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { map } from 'rxjs/operators';
 import { Observable, of as observableOf, merge } from 'rxjs';
 
+import { User } from '@pages/users/models/user'
+
 // TODO: Replace this with your own data model type
 export interface UserListItem {
-  name: string;
   id: number;
+  email?: string;
+  name: string;
+  avatar?: File;
+  is_active?: boolean;
+  is_locked?: boolean;
+  provider?: string;
+  avatar_url?: string;
+  user_role?: string;
+  login_attempt_count?: number;
+  username?: string;
+  phone?: string;
 }
 
 // TODO: replace this with real data from your application
@@ -40,7 +53,7 @@ const EXAMPLE_DATA: UserListItem[] = [
  * (including sorting, pagination, and filtering).
  */
 export class UserListDataSource extends DataSource<UserListItem> {
-  data: UserListItem[] = EXAMPLE_DATA;
+  data: UserListItem[] = EXAMPLE_DATA; // FIXME new MatDataSource(EXAMPLE_DATA);
   paginator: MatPaginator;
   sort: MatSort;
 

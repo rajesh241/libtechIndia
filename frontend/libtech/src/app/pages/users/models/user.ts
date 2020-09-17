@@ -1,16 +1,16 @@
 export class User {
   id: number;
-  email: string;
   name: string;
-  avatar: File;
-  is_active: boolean;
-  is_locked: boolean;
-  provider: string;
-  avatar_url: string;
+  username: string;
+  email: string;
+  phone: string;
   user_role: string;
   login_attempt_count: number;
-  username: string;
-  phone: string;
+  provider: string;
+  avatar: File;
+  avatar_url: string;
+  is_active: boolean;
+  is_locked: boolean;
 
   /*
   constructor(private id: number,

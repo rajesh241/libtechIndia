@@ -22,6 +22,12 @@ import { UserListComponent } from './pages/users/components/user-list/user-list.
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
+import { UserFormComponent } from './pages/users/components/user-form/user-form.component';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatCardModule } from '@angular/material/card';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -32,7 +38,8 @@ import { MatSortModule } from '@angular/material/sort';
     CrawlsComponent,
     UsersComponent,
     LoginComponent,
-    UserListComponent
+    UserListComponent,
+    UserFormComponent
   ],
   imports: [
     BrowserModule,
@@ -47,7 +54,12 @@ import { MatSortModule } from '@angular/material/sort';
     MatListModule,
     MatTableModule,
     MatPaginatorModule,
-    MatSortModule
+    MatSortModule,
+    MatInputModule,
+    MatSelectModule,
+    MatRadioModule,
+    MatCardModule,
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
