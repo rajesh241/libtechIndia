@@ -1,1 +1,40 @@
-<p>login works!</p>
+<form [formGroup]="loginForm" novalidate (ngSubmit)="onSubmit()" class="container" align="center">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title align="center">Login using Email</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="container">
+      <div class="container">
+        <mat-form-field class="full-width">
+          <input matInput type="text" placeholder="Email" formControlName="email" />
+          <mat-error *ngIf="loginForm.controls['email'].hasError('required')">
+            Email ID is <strong>required</strong>
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="full-width">
+          <input matInput type="password" placeholder="Password" formControlName="password" />
+          <mat-error *ngIf="loginForm.controls['password'].hasError('required')">
+            Password is <strong>required</strong>
+          </mat-error>
+          <mat-error *ngIf="!loginForm.controls['password'].valid">
+            Password needs to be <strong>at least 8 characters long</strong>
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" type="submit"
+              [disabled]="loginForm.status == 'INVALID'">Login</button>
+    </mat-card-actions>
+  </mat-card>
+  <mat-card class="login-card">
+    <mat-card-content class="container">
+      <div class="container">
+        <button mat-raised-button color="warn" class="full-width">Login using Google</button>
+      </div>
+      <div class="container">
+        <button mat-raised-button color="primary" class="full-width">Login using Facebook</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</form>

@@ -14,6 +14,10 @@
          *ngIf="authService.isAuthenticated()">Admin</a>
       <a mat-list-item routerLinkActive="active" routerLink="crawls"
          *ngIf="authService.isAuthenticated()">Crawls</a>
+      <a mat-list-item routerLinkActive="active" routerLink="users"
+         *ngIf="authService.isAuthenticated()">Users</a>
+      <a mat-list-item routerLinkActive="active" routerLink="login"
+         *ngIf="authService.isAuthenticated()">Login</a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>

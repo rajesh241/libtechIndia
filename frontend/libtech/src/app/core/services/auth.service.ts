@@ -1,9 +1,16 @@
 import { Injectable } from '@angular/core';
 
+import { User } from '@pages/users/models/user';
+
+export interface AuthData {
+
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private user: User;
 
   constructor() {
     console.log('AuthService.constructor()');
