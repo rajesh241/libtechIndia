@@ -5,7 +5,7 @@ import { MatSort } from '@angular/material/sort';
 import { map } from 'rxjs/operators';
 import { Observable, of as observableOf, merge } from 'rxjs';
 
-import { User } from '@pages/users/models/user'
+import { User } from '@pages/users/models/user';
 
 // TODO: Replace this with your own data model type
 export interface UserListItem {
