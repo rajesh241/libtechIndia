@@ -15,7 +15,7 @@ django.setup()
 from nrega.models import Location, Report, LibtechTag, Bundle
 from nrega.serializers import report_post_save_operation
 from nrega.bundle import create_bundle
-
+from core.utils import send_slack_message
 def args_fetch():
     '''
     Paser for the argument list that returns the args list
@@ -50,12 +50,15 @@ def main():
     args = args_fetch()
     logger = logger_fetch(args.get('log_level'))
     if args['test']:
+        send_slack_message("Testing from scripts")
+        exit(0)
         logger.info("Testing test script")
         objs = Bundle.objects.all()
         for obj in objs:
             obj.is_bundle_created = True
             obj.save()
     if args["createBundle"]:
+        message = ''
         instance = Bundle.objects.filter(is_bundle_created=False,
                                          is_error=False).first()
         if instance is None:
@@ -79,9 +82,12 @@ def main():
               bundle_url = create_bundle(instance, qs)
               logger.info(f"Bundle created wtih url {bundle_url}")
               is_error = False
+              message = f"Created Bundle for bundle id {instance.id} for sample {libtech_tag_array} for report types {instance.report_types} has been created and the it can be downloaded at {bundle_url}"
           except:
               bundle_url = ""
               is_error = True
+              message = f"Created Bundle for bundle id {instance.id} for {libtech_tag_array} for report types {instance.report_types} has failed for unknown reasons"
+          send_slack_message(message)
           if(is_error == True):
               instance.is_error = True
               instance.save()
@@ -89,6 +95,7 @@ def main():
               instance.bundle_url = bundle_url
               instance.is_bundle_created = True
               instance.save()
+          
 
 if __name__ == '__main__':
     main()

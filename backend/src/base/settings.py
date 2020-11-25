@@ -254,3 +254,6 @@ AWS_SECRET_KEY =  BASE_CONFIG.get("aws_secret_access_key")
 AWS_PROFILE_NAME = "libtechIndia"
 AWS_DATA_BUCKET = "libtech-india-data"
 AWS_REGION = "ap-south-1"
+
+# SLACK Related Configuration
+SLACK_MESSAGING_URL = BASE_CONFIG.get('slack_messaging_url')
