@@ -3,16 +3,29 @@ from django.views.generic import View
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
 from django.db.models import Count
+from rest_framework import viewsets
 from rest_framework import (generics, authentication, permissions,
                             status, mixins, exceptions)
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from nrega.models import Location, LibtechTag, Report
+from nrega.models import Location, LibtechTag, Report, TaskQueue, Bundle
 from nrega.mixins import HttpResponseMixin
 from nrega.serializers import (LocationSerializer,
                                ReportSerializer,
+                               TaskQueueSerializer,
+                               BundleSerializer,
                           LibtechTagSerializer)
 from nrega.utils import is_json, tag_locations
+
+
+
+class BundleViewSet(viewsets.ModelViewSet):
+    """
+    A simple ViewSet for viewing and editing the portfolio tickers
+    associated with the user.
+    """
+    serializer_class = BundleSerializer
+    queryset = Bundle.objects.all()
 
 def get_id_from_request(request):
     """Small function to retrieve the Id from request
@@ -201,6 +214,67 @@ class ReportAPIView(HttpResponseMixin,
                 data = json.dumps({"message":"Need to specify the ID for this method"})
                 return self.render_to_response(data, status="404")
             self.input_id = input_id
+        return self.partial_update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Will delete the retrieved object"""
+        self.input_id = get_id_from_request(request)
+        if self.input_id is None:
+            data = json.dumps({"message":"Need to specify the ID for this method"})
+            return self.render_to_response(data, status="404")
+        return self.destroy(request, *args, **kwargs)
+
+
+class TaskQueueAPIView(HttpResponseMixin,
+                    mixins.CreateModelMixin,
+                    mixins.DestroyModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.UpdateModelMixin,
+                    generics.ListAPIView):
+    """API View for the Report Model"""
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    serializer_class = TaskQueueSerializer
+    passed_id = None
+    input_id = None
+    search_fields = ('location_code')
+    filter_fields = ('is_done', 'location_code', 'scheme', 'status',
+                     'in_progress', 'task_type')
+    ordering_fields = ('location_code', 'id', 'priority', 'updated')
+    queryset = TaskQueue.objects.all()
+    def get_object(self):
+        input_id = self.input_id
+        queryset = self.get_queryset()
+        obj = None
+        if input_id is not None:
+            obj = get_object_or_404(queryset, id=input_id)
+            self.check_object_permissions(self.request, obj)
+        return obj
+    def get(self, request, *args, **kwargs):
+        self.input_id = get_id_from_request(request)
+        if self.input_id is not None:
+            return self.retrieve(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Post method would create a report object"""
+        return self.create(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """put method will update the report object. All fields need to be
+        present"""
+        self.input_id = get_id_from_request(request)
+        if self.input_id is None:
+            data = json.dumps({"message":"Need to specify the ID for this method"})
+            return self.render_to_response(data, status="404")
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        """patch method will update the object, with the specified fields. All
+        fields need not be present"""
+        self.input_id = get_id_from_request(request)
+        if self.input_id is None:
+            data = json.dumps({"message":"Need to specify the ID for this method"})
+            return self.render_to_response(data, status="404")
         return self.partial_update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):

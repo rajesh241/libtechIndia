@@ -1,5 +1,5 @@
 from rest_framework import serializers, fields
-from nrega.models import Location, LibtechTag, Report
+from nrega.models import Location, LibtechTag, Report, TaskQueue, Bundle
 
 class LocationSerializer(serializers.ModelSerializer):
     """Serializer for module Location"""
@@ -15,6 +15,13 @@ class LibtechTagSerializer(serializers.ModelSerializer):
         model = LibtechTag
         fields = '__all__'
 
+class BundleSerializer(serializers.ModelSerializer):
+    """Serializer for module Bundle"""
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    class Meta:
+        """Meta Class"""
+        model = Bundle
+        fields = '__all__'
 
 def report_post_save_operation(obj):
     """Report  Post save operation"""
@@ -67,3 +74,11 @@ class ReportSerializer(serializers.ModelSerializer):
         instance.save()
         report_post_save_operation(instance)
         return instance
+
+
+class TaskQueueSerializer(serializers.ModelSerializer):
+    """Serializer for module TaskQueue"""
+    class Meta:
+        """Meta Class"""
+        model = TaskQueue
+        fields = '__all__'

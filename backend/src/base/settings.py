@@ -248,3 +248,9 @@ DUMMY_DOMAIN_FOR_EMAIL = "libtech.aeiou"
 OTP_SECRET_KEY = BASE_CONFIG.get("otp_secret_key", "")
 OTP_EXPIRATION_THRESHOLD = BASE_CONFIG.get("otp_expiration_threshold", 15)
 
+#AWS Related settings
+AWS_ACCESS_KEY =  BASE_CONFIG.get("aws_access_key_id")
+AWS_SECRET_KEY =  BASE_CONFIG.get("aws_secret_access_key")
+AWS_PROFILE_NAME = "libtechIndia"
+AWS_DATA_BUCKET = "libtech-india-data"
+AWS_REGION = "ap-south-1"

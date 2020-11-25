@@ -11,7 +11,7 @@ from commons import logger_fetch, is_english
 from defines import DJANGO_SETTINGS, STATE_SHORT_CODE_DICT
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", DJANGO_SETTINGS)
 django.setup()
-from nrega.models import Location, Report
+from nrega.models import Location, Report, LibtechTag
 from nrega.serializers import report_post_save_operation
 
 def args_fetch():
@@ -27,6 +27,10 @@ def args_fetch():
     parser.add_argument('-f', '--fixfilepath', help='fix broken file paths',
                         required=False, action='store_const', const=1)
     parser.add_argument('-lt', '--location_type', help='location type', required=False)
+    parser.add_argument('-slt', '--setLocationTag', help='set Location Tags',
+                        required=False, action='store_const', const=1)
+    parser.add_argument('-tid', '--tagID', help='location tag id', required=False)
+    parser.add_argument('-fn', '--fileName', help='File Name', required=False)
     parser.add_argument('-e', '--export', help='export',
                         required=False, action='store_const', const=1)
     parser.add_argument('-ir', '--importReports', help='export',
@@ -127,7 +131,6 @@ def main():
                 my_location.save()
 #                setattr(my_location, name_param.lower(), name)
 
-    logger.info("...END PROCESSING")
     if args['importReports']:
         logger.info(f"Importing reports")
         filename = "/tmp/reports.csv"
@@ -156,6 +159,18 @@ def main():
             my_report.excel_url = row.get("excel_url")
             my_report.save()
             report_post_save_operation(my_report)
+    if args['setLocationTag']:
+        dataframe = pd.read_csv(args['fileName'])
+        tid = args['tagID']
+        location_tag = LibtechTag.objects.filter(id=tid).first()
+        logger.info(location_tag)
+        for index, row in dataframe.iterrows():
+            location_code = row.get("location_code", "")
+            logger.info(f"processing {location_code}")
+            my_location = Location.objects.filter(code=location_code,
+                                                  scheme='nrega').first()
+            my_location.libtech_tag.add(location_tag)            
+    logger.info("...END PROCESSING")
 
 if __name__ == '__main__':
     main()
