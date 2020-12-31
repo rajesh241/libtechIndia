@@ -6,7 +6,7 @@ from .actions import reset_in_progress
 class LocationModelAdmin(admin.ModelAdmin):
     """Model Adminf or class Location"""
     list_display = ["id", "name", "code", "accuracy"]
-    list_filter = ["libtech_tag__name", "location_type", "scheme"]
+    list_filter = ["libtech_tag__name", "location_type", "scheme", "state_name"]
     search_fields = ["code", "name"]
     readonly_fields = ["parent_location"]
     class Meta:
