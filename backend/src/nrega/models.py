@@ -62,9 +62,10 @@ class Location(models.Model):
 
 class Record(models.Model):
     """this is the model class for Record"""
-    location = models.ForeignKey('Location', on_delete=models.CASCADE)
-    finyear = models.CharField(max_length=2, default='NA')
-    record_no = models.CharField(max_length=256)
+    location = models.ForeignKey('Location', on_delete=models.CASCADE,
+                                 db_index=True)
+    finyear = models.CharField(max_length=2, default='NA', db_index=True)
+    record_no = models.CharField(max_length=256, db_index=True)
     record_type = models.CharField(max_length=256, null=True, blank=True)
     libtech_tag = models.ManyToManyField(LibtechTag, blank=True, db_index=True)
     location_type = models.CharField(max_length=64, db_index=True, null=True,
