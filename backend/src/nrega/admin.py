@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Location, LibtechTag, Report, TaskQueue, Bundle
+from .models import Location, LibtechTag, Report, TaskQueue, Bundle, Record
 from .actions import reset_in_progress
 # Register your models here.
 
@@ -31,6 +31,16 @@ class ReportModelAdmin(admin.ModelAdmin):
     def get_ordering(self, request):
                 return ['-updated']
 
+class RecordModelAdmin(admin.ModelAdmin):
+    """Model Adminf or class Report"""
+    list_display = ["id", "location", "record_type", "record_no", "finyear"]
+    list_filter = [ "location__location_type", "finyear", "record_type"]
+    search_fields = ["location__code", "location__name"]
+    readonly_fields = ["location"]
+    class Meta:
+        model = Record
+    def get_ordering(self, request):
+                return ['-updated']
 class TaskQueueModelAdmin(admin.ModelAdmin):
     """Model Admin for Task Queue"""
     actions = [reset_in_progress]
@@ -52,3 +62,4 @@ admin.site.register(LibtechTag, LibtechTagModelAdmin)
 admin.site.register(Report, ReportModelAdmin)
 admin.site.register(TaskQueue, TaskQueueModelAdmin)
 admin.site.register(Bundle, BundleModelAdmin)
+admin.site.register(Record, RecordModelAdmin)

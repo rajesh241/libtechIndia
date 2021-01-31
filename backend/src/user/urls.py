@@ -26,7 +26,7 @@ urlpatterns = [
     path('bulkcreate/', views.BulkUserAPIView.as_view(), name='bulk_create'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('bulkdelete/', views.UserBulkDeleteView.as_view(), name='bulk_delete'),
-    path('password_reset/', include('django_rest_passwordreset.urls',
-                                             namespace='password_reset')),
+#    path('password_reset/', include('django_rest_passwordreset.urls',
+#                                             namespace='password_reset')),
 
 ]

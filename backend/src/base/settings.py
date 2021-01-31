@@ -30,7 +30,7 @@ SECRET_KEY = BASE_CONFIG.get('secret_key')
 DEBUG = True
 
 
-ALLOWED_HOSTS = ["backend.libtech.in"]
+ALLOWED_HOSTS = ["backend.libtech.in","128.199.20.172"]
 
 
 # Application definition
@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
-    'django_rest_passwordreset',
+#    'django_rest_passwordreset',
     'core',
     'user',
     'nrega',

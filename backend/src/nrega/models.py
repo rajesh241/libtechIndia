@@ -1,14 +1,16 @@
 from rq import Queue
-from nrega.worker import conn
 
 from django.db import models
-from django_mysql.models import JSONField
+#from django_mysql.models import JSONField
+from django.db.models import JSONField
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from nrega.bundle import create_bundle
 User = get_user_model()
 # Create your models here.
 
+def get_default_additional_fields():
+    return {}
 
 class LibtechTag(models.Model):
     """This is class to tags
@@ -58,7 +60,34 @@ class Location(models.Model):
         """Default str method for the class"""
         return f"{self.code}-{self.name}"
 
-
+class Record(models.Model):
+    """this is the model class for Record"""
+    location = models.ForeignKey('Location', on_delete=models.CASCADE)
+    finyear = models.CharField(max_length=2, default='NA')
+    record_no = models.CharField(max_length=256)
+    record_type = models.CharField(max_length=256, null=True, blank=True)
+    libtech_tag = models.ManyToManyField(LibtechTag, blank=True, db_index=True)
+    location_type = models.CharField(max_length=64, db_index=True, null=True,
+                                     blank=True)
+    location_code = models.CharField(max_length=20, db_index=True, null=True,
+                                     blank=True)
+    url = models.URLField(max_length=2048, blank=True, null=True)
+    additional_fields = JSONField(default=get_default_additional_fields)  
+    is_downloaded = models.BooleanField(default=False)
+    is_processed = models.BooleanField(default=False)
+    last_download_date = models.DateField(null=True, blank=True)
+    is_recurring_download = models.BooleanField(default=True)
+    threshold_days = models.PositiveSmallIntegerField(default=14)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    remarks = models.TextField(blank=True, null=True)
+    class Meta:
+        """class to hold meta data attributes"""
+        unique_together = ('location', 'record_no', 'finyear')
+        db_table = 'record'
+    def __str__(self):
+        """Default str method for the class"""
+        return f"{self.location}_{self.finyear}_{self.record_type}"
 class Report(models.Model):
     """This is the class for report meta data"""
     location = models.ForeignKey('Location', on_delete=models.CASCADE)
